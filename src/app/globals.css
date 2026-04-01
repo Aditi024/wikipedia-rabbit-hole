@@ -1,26 +1,103 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-background: #0d0a14;
+  --color-foreground: #f5efe6;
+  --font-sans: var(--font-body);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  overflow-x: hidden;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.universe-bg {
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(180, 100, 60, 0.07) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(200, 140, 80, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(160, 80, 160, 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 30% 30%, rgba(220, 120, 100, 0.04) 0%, transparent 40%),
+    #0d0a14;
+  position: relative;
+}
+
+.universe-bg::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.mesh-overlay {
+  position: fixed;
+  inset: -10%;
+  width: 120%;
+  height: 120%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.45;
+}
+
+.universe-bg::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(1.5px 1.5px at 10% 20%, rgba(255, 200, 120, 0.2), transparent),
+    radial-gradient(1px 1px at 30% 60%, rgba(255, 180, 140, 0.12), transparent),
+    radial-gradient(1px 1px at 50% 10%, rgba(255, 220, 180, 0.15), transparent),
+    radial-gradient(1.5px 1.5px at 70% 40%, rgba(255, 160, 200, 0.12), transparent),
+    radial-gradient(1px 1px at 90% 70%, rgba(255, 200, 120, 0.18), transparent),
+    radial-gradient(1px 1px at 15% 80%, rgba(255, 180, 160, 0.1), transparent),
+    radial-gradient(1px 1px at 45% 45%, rgba(255, 220, 200, 0.08), transparent),
+    radial-gradient(1.5px 1.5px at 65% 85%, rgba(255, 200, 160, 0.14), transparent),
+    radial-gradient(1px 1px at 85% 15%, rgba(255, 180, 120, 0.12), transparent),
+    radial-gradient(2px 2px at 25% 35%, rgba(255, 210, 160, 0.22), transparent),
+    radial-gradient(1.5px 1.5px at 55% 75%, rgba(255, 190, 140, 0.16), transparent);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(1deg); }
+  75% { transform: rotate(-1deg); }
+}
+
+.float-slow {
+  animation: float 6s ease-in-out infinite;
+}
+
+.float-medium {
+  animation: float 4s ease-in-out infinite;
+}
+
+.wiggle {
+  animation: wiggle 4s ease-in-out infinite;
+}
+
+@keyframes dash-march {
+  to { stroke-dashoffset: -20; }
 }

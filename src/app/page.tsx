@@ -1,65 +1,402 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useCallback, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { RabbitHoleArticle } from "@/app/api/generate/route";
+import { GemRarity } from "@/lib/scoring";
+import { generateNodePositions, NodePosition } from "@/lib/layout";
+import { saveRabbitHole, updateStats } from "@/lib/storage";
+import { generateNarrative, RabbitHoleNarrative } from "@/lib/narrative";
+import NodeCanvas from "@/app/components/NodeCanvas";
+import { Connection } from "@/app/components/NodeCanvas";
+import ExploreButton from "@/app/components/ExploreButton";
+import ScoreDisplay from "@/app/components/ScoreDisplay";
+
+interface ScoreInfo {
+  title: string;
+  rarity: GemRarity;
+  points: number;
+  color: string;
+  monthlyViews: number;
+}
+
+type AppState = "landing" | "loading" | "exploring";
+
+const LOADING_MESSAGES = [
+  "Tunneling through Wikipedia...",
+  "Following a curious link...",
+  "Discovering something obscure...",
+  "Connecting the dots...",
+  "Going deeper...",
+];
+
+function LoadingText() {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIndex((i) => (i + 1) % LOADING_MESSAGES.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.p
+        key={index}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        className="text-amber-100/80 text-lg"
+        style={{ fontFamily: "var(--font-body)" }}
+      >
+        {LOADING_MESSAGES[index]}
+      </motion.p>
+    </AnimatePresence>
+  );
+}
+
+function buildDefaultConnections(count: number): Connection[] {
+  const conns: Connection[] = [];
+  for (let i = 0; i < count - 1; i++) {
+    conns.push({ from: i, to: i + 1 });
+  }
+  return conns;
+}
+
+function tracePathFromConnections(
+  connections: Connection[],
+  articles: RabbitHoleArticle[]
+): RabbitHoleArticle[] {
+  if (connections.length === 0) return articles;
+
+  const adjMap = new Map<number, number[]>();
+  const allIndices = new Set<number>();
+  for (const c of connections) {
+    allIndices.add(c.from);
+    allIndices.add(c.to);
+    if (!adjMap.has(c.from)) adjMap.set(c.from, []);
+    adjMap.get(c.from)!.push(c.to);
+  }
+
+  const inDegree = new Map<number, number>();
+  for (const idx of allIndices) inDegree.set(idx, 0);
+  for (const c of connections) {
+    inDegree.set(c.to, (inDegree.get(c.to) || 0) + 1);
+  }
+
+  let start = -1;
+  for (const [idx, deg] of inDegree) {
+    if (deg === 0) {
+      start = idx;
+      break;
+    }
+  }
+  if (start === -1) start = connections[0]?.from ?? 0;
+
+  const path: number[] = [];
+  const visited = new Set<number>();
+  let current: number | undefined = start;
+
+  while (current !== undefined && !visited.has(current)) {
+    visited.add(current);
+    path.push(current);
+    const neighbors = adjMap.get(current);
+    current = neighbors?.[0];
+  }
+
+  return path
+    .filter((i) => i >= 0 && i < articles.length)
+    .map((i) => articles[i]);
+}
 
 export default function Home() {
+  const [state, setState] = useState<AppState>("landing");
+  const [articles, setArticles] = useState<RabbitHoleArticle[]>([]);
+  const [positions, setPositions] = useState<NodePosition[]>([]);
+  const [scores, setScores] = useState<ScoreInfo[]>([]);
+  const [totalScore, setTotalScore] = useState(0);
+  const [narrative, setNarrative] = useState<RabbitHoleNarrative | null>(null);
+  const [connections, setConnections] = useState<Connection[]>([]);
+  const [saved, setSaved] = useState(false);
+
+  const explore = useCallback(async () => {
+    setState("loading");
+    setSaved(false);
+
+    try {
+      const genRes = await fetch("/api/generate");
+      const genData = await genRes.json();
+
+      if (!genData.articles || genData.articles.length === 0) {
+        throw new Error("No articles returned");
+      }
+
+      const chain: RabbitHoleArticle[] = genData.articles;
+      const nodePositions = generateNodePositions(chain.length);
+      const defaultConns = buildDefaultConnections(chain.length);
+      const holeNarrative = generateNarrative(chain);
+
+      setArticles(chain);
+      setPositions(nodePositions);
+      setConnections(defaultConns);
+      setNarrative(holeNarrative);
+      setScores([]);
+      setTotalScore(0);
+      setState("exploring");
+
+      try {
+        const scoreRes = await fetch("/api/score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ titles: chain.map((a) => a.title) }),
+        });
+        const scoreData = await scoreRes.json();
+        setScores(scoreData.scores || []);
+        setTotalScore(scoreData.totalScore || 0);
+
+        const rarestScore = (scoreData.scores || []).reduce(
+          (best: ScoreInfo | null, s: ScoreInfo) =>
+            !best || s.points > best.points ? s : best,
+          null
+        );
+        if (rarestScore) {
+          updateStats(scoreData.totalScore, {
+            title: rarestScore.title,
+            rarity: rarestScore.rarity,
+          });
+        }
+      } catch {
+        // Scoring is non-critical
+      }
+    } catch (error) {
+      console.error("Failed to explore:", error);
+      setState("landing");
+    }
+  }, []);
+
+  const handleConnectionsChange = useCallback(
+    (newConnections: Connection[]) => {
+      setConnections(newConnections);
+
+      const pathArticles = tracePathFromConnections(newConnections, articles);
+      if (pathArticles.length >= 2) {
+        setNarrative(generateNarrative(pathArticles));
+      } else {
+        setNarrative(null);
+      }
+    },
+    [articles]
+  );
+
+  const handleRemoveArticle = useCallback(
+    (index: number) => {
+      const newArticles = articles.filter((_, i) => i !== index);
+      const newPositions = positions.filter((_, i) => i !== index);
+      const newScores = scores.filter(
+        (s) => s.title !== articles[index]?.title
+      );
+
+      // Bridge: for every pair (A→deleted, deleted→B), create A→B
+      const incoming = connections.filter((c) => c.to === index);
+      const outgoing = connections.filter((c) => c.from === index);
+      const bridges: Connection[] = [];
+      for (const inc of incoming) {
+        for (const out of outgoing) {
+          const alreadyExists = connections.some(
+            (c) => c.from === inc.from && c.to === out.to
+          );
+          if (!alreadyExists && inc.from !== out.to) {
+            bridges.push({ from: inc.from, to: out.to });
+          }
+        }
+      }
+
+      const reindex = (idx: number) => (idx > index ? idx - 1 : idx);
+      const newConnections = [
+        ...connections.filter((c) => c.from !== index && c.to !== index),
+        ...bridges,
+      ].map((c) => ({ from: reindex(c.from), to: reindex(c.to) }));
+
+      setArticles(newArticles);
+      setPositions(newPositions);
+      setScores(newScores);
+      setConnections(newConnections);
+
+      if (newArticles.length >= 2) {
+        const pathArticles = tracePathFromConnections(
+          newConnections,
+          newArticles
+        );
+        setNarrative(generateNarrative(pathArticles));
+        setTotalScore(newScores.reduce((sum, s) => sum + s.points, 0));
+      } else if (newArticles.length === 0) {
+        setState("landing");
+      } else {
+        setNarrative(null);
+        setTotalScore(newScores.reduce((sum, s) => sum + s.points, 0));
+      }
+    },
+    [articles, positions, scores, connections]
+  );
+
+  const handleSave = useCallback(() => {
+    if (articles.length === 0) return;
+    const hole = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      articles,
+      gemScore: totalScore,
+      createdAt: new Date().toISOString(),
+    };
+    saveRabbitHole(hole);
+    setSaved(true);
+  }, [articles, totalScore]);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="flex-1 flex flex-col items-center justify-center relative">
+      <AnimatePresence mode="wait">
+        {state === "landing" && (
+          <motion.div
+            key="landing"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, y: -30 }}
+            className="flex flex-col items-center gap-10 text-center px-6"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 0.2, scale: 1 }}
+              transition={{ delay: 0.1, duration: 1.2 }}
+              className="absolute w-[600px] h-[600px] rounded-full"
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(220,160,80,0.25) 0%, rgba(200,100,140,0.1) 40%, transparent 70%)",
+                filter: "blur(80px)",
+              }}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <motion.h1
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", damping: 18, stiffness: 100 }}
+              className="relative z-10 leading-[0.9]"
+            >
+              <span
+                className="block text-8xl md:text-[11rem] font-extrabold text-amber-50 tracking-tight"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                rabbit
+              </span>
+              <span
+                className="block text-8xl md:text-[11rem] font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-rose-300 to-purple-300"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                hole.
+              </span>
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="text-xl text-amber-100/80 max-w-sm relative z-10"
+              style={{ fontFamily: "var(--font-body)" }}
+            >
+              Wander through Wikipedia.
+              <br />
+              Find what you never knew you were looking for.
+            </motion.p>
+            <div className="relative z-10">
+              <ExploreButton onClick={explore} loading={false} />
+            </div>
+          </motion.div>
+        )}
+
+        {state === "loading" && (
+          <motion.div
+            key="loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col items-center gap-6"
           >
-            Documentation
-          </a>
-        </div>
-      </main>
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 2.5, ease: "linear" }}
+              className="w-16 h-16 rounded-full border-2 border-amber-900/30 border-t-amber-300 border-r-rose-300"
+            />
+            <LoadingText />
+            <motion.div
+              className="flex gap-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              {[0, 1, 2].map((i) => (
+                <motion.div
+                  key={i}
+                  className="w-2 h-2 rounded-full bg-amber-400/40"
+                  animate={{
+                    opacity: [0.3, 1, 0.3],
+                    scale: [1, 1.4, 1],
+                  }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 1.2,
+                    delay: i * 0.2,
+                  }}
+                />
+              ))}
+            </motion.div>
+          </motion.div>
+        )}
+
+        {state === "exploring" && (
+          <motion.div
+            key="exploring"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="w-full flex-1 flex flex-col"
+          >
+            <div className="flex items-center justify-between px-8 py-3 z-20">
+              <ScoreDisplay
+                score={totalScore}
+                maxScore={articles.length * 5}
+              />
+              <div className="flex items-center gap-3">
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 2.5 }}
+                  onClick={handleSave}
+                  disabled={saved}
+                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                    saved
+                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                      : "bg-amber-100/8 text-amber-100 border border-amber-200/20 hover:bg-amber-100/15 hover:text-white"
+                  }`}
+                  style={{ fontFamily: "var(--font-body)" }}
+                >
+                  {saved ? "Saved!" : "Save"}
+                </motion.button>
+                <ExploreButton
+                  onClick={explore}
+                  loading={false}
+                  variant="small"
+                />
+              </div>
+            </div>
+
+            <NodeCanvas
+              articles={articles}
+              positions={positions}
+              scores={scores}
+              narrative={narrative}
+              connections={connections}
+              onConnectionsChange={handleConnectionsChange}
+              onRemoveArticle={handleRemoveArticle}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
