@@ -107,9 +107,9 @@ export default function RabbitHoleSummary({
                         </div>
                       </div>
 
-                      {i < narrative.steps.length - 1 && (
-                        <p className="text-sm text-text-muted mt-2 ml-[60px] font-body">
-                          {step.segue} &darr;
+                      {i < narrative.steps.length - 1 && step.connection && (
+                        <p className="text-sm text-text-secondary mt-2 leading-relaxed font-body">
+                          {step.connection}
                         </p>
                       )}
                     </div>
