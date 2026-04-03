@@ -11,6 +11,7 @@ import {
 } from "@/lib/storage";
 import { DEFAULT_STATS } from "@/lib/config";
 import { encodeRabbitHole } from "@/lib/share";
+import ExploreButton from "@/app/components/ExploreButton";
 import Link from "next/link";
 
 function StatCard({
@@ -119,16 +120,10 @@ export default function CollectionPage() {
           transition={{ delay: 0.25 }}
           className="flex flex-col items-center py-16 gap-5"
         >
-          <div className="text-6xl select-none">🕳️</div>
           <p className="text-text-muted text-base font-body">
             Nothing here yet. Go explore.
           </p>
-          <Link
-            href="/"
-            className="px-8 py-3 rounded-full bg-brand text-white font-semibold text-sm hover:bg-brand-hover transition-colors font-display"
-          >
-            Start Exploring
-          </Link>
+          <ExploreButton href="/" label="Start Exploring" />
         </motion.div>
       ) : (
         <div className="space-y-3">

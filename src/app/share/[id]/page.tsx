@@ -10,7 +10,6 @@ import { buildDefaultConnections } from "@/lib/graph";
 import NodeCanvas from "@/app/components/NodeCanvas";
 import ScoreDisplay from "@/app/components/ScoreDisplay";
 import ExploreButton from "@/app/components/ExploreButton";
-import Link from "next/link";
 
 type PageState = "loading" | "ready" | "error";
 
@@ -120,12 +119,7 @@ export default function SharePage({
             <p className="text-text-secondary font-body max-w-sm">
               The link might be broken or the articles may no longer exist.
             </p>
-            <Link
-              href="/"
-              className="inline-flex px-6 py-3 rounded-full bg-brand text-white font-semibold text-sm hover:bg-brand-hover transition-colors font-display"
-            >
-              Dig your own rabbit hole
-            </Link>
+            <ExploreButton href="/" label="Dig your own rabbit hole" />
           </motion.div>
         )}
 

@@ -1,23 +1,37 @@
 "use client";
 
 import { useRef, useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { generateSketchyPath } from "@/lib/sketchy-path";
 
 interface ExploreButtonProps {
-  onClick: () => void;
-  loading: boolean;
+  onClick?: () => void;
+  href?: string;
+  loading?: boolean;
   variant?: "landing" | "small";
+  label?: string;
 }
 
 export default function ExploreButton({
   onClick,
-  loading,
+  href,
+  loading = false,
   variant = "landing",
+  label,
 }: ExploreButtonProps) {
+  const router = useRouter();
   const btnRef = useRef<HTMLButtonElement>(null);
   const [dims, setDims] = useState<{ w: number; h: number } | null>(null);
   const [hovered, setHovered] = useState(false);
+
+  const handleClick = () => {
+    if (href) {
+      router.push(href);
+    } else if (onClick) {
+      onClick();
+    }
+  };
 
   useEffect(() => {
     const el = btnRef.current;
@@ -45,7 +59,7 @@ export default function ExploreButton({
   if (variant === "small") {
     return (
       <motion.button
-        onClick={onClick}
+        onClick={handleClick}
         disabled={loading}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
@@ -70,7 +84,7 @@ export default function ExploreButton({
   return (
     <motion.button
       ref={btnRef}
-      onClick={onClick}
+      onClick={handleClick}
       disabled={loading}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -137,7 +151,7 @@ export default function ExploreButton({
           </span>
         ) : (
           <span className="flex items-center gap-2">
-            Start exploring
+            {label || "Start exploring"}
             <motion.span
               animate={{ x: [0, 4, 0] }}
               transition={{
