@@ -1,4 +1,4 @@
-import { RabbitHoleArticle } from "@/app/api/generate/route";
+import { RabbitHoleArticle } from "./types";
 
 export interface RabbitHoleNarrative {
   pullQuote: string;

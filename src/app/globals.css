@@ -1,14 +1,46 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: #FFAAFA;
-  --color-foreground: #1a1520;
+  /* === Color tokens === */
   --color-brand: #EF3922;
+  --color-brand-hover: #d42f1a;
+  --color-foreground: #1a1520;
+  --color-background: #FFAAFA;
   --color-grid: #F184EB;
+  --color-surface: #ffffff;
+
+  /* Foreground at opacity steps (text hierarchy) */
+  --color-text-primary: rgba(26, 21, 32, 0.9);
+  --color-text-secondary: rgba(26, 21, 32, 0.75);
+  --color-text-muted: rgba(26, 21, 32, 0.6);
+  --color-text-faint: rgba(26, 21, 32, 0.4);
+
+  /* Surface at opacity steps (cards, panels, overlays) */
+  --color-surface-frosted: rgba(255, 255, 255, 0.95);
+  --color-surface-translucent: rgba(255, 255, 255, 0.7);
+  --color-surface-glass: rgba(255, 255, 255, 0.4);
+
+  /* Brand at opacity steps */
+  --color-brand-subtle: rgba(239, 57, 34, 0.1);
+  --color-brand-light: rgba(239, 57, 34, 0.2);
+  --color-brand-medium: rgba(239, 57, 34, 0.4);
+
+  /* Overlay */
+  --color-overlay: rgba(0, 0, 0, 0.4);
+
+  /* Rarity colors */
+  --color-rarity-common: #6B7280;
+  --color-rarity-uncommon: #059669;
+  --color-rarity-rare: #2563EB;
+  --color-rarity-epic: #7C3AED;
+  --color-rarity-legendary: #B45309;
+
+  /* === Font tokens === */
   --font-sans: var(--font-body);
   --font-mono: var(--font-geist-mono);
 }
 
+/* === Base styles === */
 body {
   background: var(--color-background);
   color: var(--color-foreground);
@@ -26,8 +58,18 @@ body {
   color: #fff;
 }
 
+/* === Font utility classes === */
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+/* === Layout utilities === */
 .universe-bg {
-  background: #FFAAFA;
+  background: var(--color-background);
   position: relative;
 }
 
@@ -39,6 +81,10 @@ body {
   z-index: 0;
 }
 
+.universe-bg::after {
+  display: none;
+}
+
 .mesh-overlay {
   position: fixed;
   top: 0;
@@ -48,10 +94,6 @@ body {
   pointer-events: none;
   z-index: 0;
   overflow: hidden;
-}
-
-.universe-bg::after {
-  display: none;
 }
 
 .line-clamp-1 {
@@ -68,6 +110,7 @@ body {
   overflow: hidden;
 }
 
+/* === Animations === */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-8px); }

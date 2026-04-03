@@ -13,20 +13,14 @@ export default function ScoreDisplay({ score, maxScore }: ScoreDisplayProps) {
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 2.5, type: "spring" }}
-      className="flex items-center gap-3 px-5 py-2.5 rounded-full bg-white/30 border border-[#EF3922]/15 backdrop-blur-sm"
+      className="flex items-center gap-3 px-5 py-2.5 rounded-full bg-surface-glass border border-brand-subtle backdrop-blur-sm"
     >
-      <span
-        className="text-sm text-[#1a1520]/80 font-medium"
-        style={{ fontFamily: "var(--font-body)" }}
-      >
+      <span className="text-sm text-text-secondary font-medium font-body">
         Gem Score
       </span>
-      <span
-        className="text-xl font-bold text-[#EF3922]"
-        style={{ fontFamily: "var(--font-display)" }}
-      >
+      <span className="text-xl font-bold text-brand font-display">
         {score}
-        <span className="text-sm text-[#1a1520]/70 font-normal">
+        <span className="text-sm text-text-muted font-normal">
           /{maxScore}
         </span>
       </span>

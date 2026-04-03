@@ -2,23 +2,15 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { RabbitHoleArticle } from "@/app/api/generate/route";
-import { GemRarity } from "@/lib/scoring";
+import { RabbitHoleArticle, ScoreInfo, Connection } from "@/lib/types";
 import { generateNodePositions, NodePosition } from "@/lib/layout";
 import { saveRabbitHole, updateStats } from "@/lib/storage";
 import { generateNarrative, RabbitHoleNarrative } from "@/lib/narrative";
+import { buildDefaultConnections, tracePathFromConnections } from "@/lib/graph";
+import { encodeRabbitHole } from "@/lib/share";
 import NodeCanvas from "@/app/components/NodeCanvas";
-import { Connection } from "@/app/components/NodeCanvas";
 import ExploreButton from "@/app/components/ExploreButton";
 import ScoreDisplay from "@/app/components/ScoreDisplay";
-
-interface ScoreInfo {
-  title: string;
-  rarity: GemRarity;
-  points: number;
-  color: string;
-  monthlyViews: number;
-}
 
 type AppState = "landing" | "loading" | "exploring";
 
@@ -47,67 +39,12 @@ function LoadingText() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
-        className="text-[#1a1520]/90 text-lg font-medium"
-        style={{ fontFamily: "var(--font-body)" }}
+        className="text-text-primary text-lg font-medium font-body"
       >
         {LOADING_MESSAGES[index]}
       </motion.p>
     </AnimatePresence>
   );
-}
-
-function buildDefaultConnections(count: number): Connection[] {
-  const conns: Connection[] = [];
-  for (let i = 0; i < count - 1; i++) {
-    conns.push({ from: i, to: i + 1 });
-  }
-  return conns;
-}
-
-function tracePathFromConnections(
-  connections: Connection[],
-  articles: RabbitHoleArticle[]
-): RabbitHoleArticle[] {
-  if (connections.length === 0) return articles;
-
-  const adjMap = new Map<number, number[]>();
-  const allIndices = new Set<number>();
-  for (const c of connections) {
-    allIndices.add(c.from);
-    allIndices.add(c.to);
-    if (!adjMap.has(c.from)) adjMap.set(c.from, []);
-    adjMap.get(c.from)!.push(c.to);
-  }
-
-  const inDegree = new Map<number, number>();
-  for (const idx of allIndices) inDegree.set(idx, 0);
-  for (const c of connections) {
-    inDegree.set(c.to, (inDegree.get(c.to) || 0) + 1);
-  }
-
-  let start = -1;
-  for (const [idx, deg] of inDegree) {
-    if (deg === 0) {
-      start = idx;
-      break;
-    }
-  }
-  if (start === -1) start = connections[0]?.from ?? 0;
-
-  const path: number[] = [];
-  const visited = new Set<number>();
-  let current: number | undefined = start;
-
-  while (current !== undefined && !visited.has(current)) {
-    visited.add(current);
-    path.push(current);
-    const neighbors = adjMap.get(current);
-    current = neighbors?.[0];
-  }
-
-  return path
-    .filter((i) => i >= 0 && i < articles.length)
-    .map((i) => articles[i]);
 }
 
 export default function Home() {
@@ -119,10 +56,12 @@ export default function Home() {
   const [narrative, setNarrative] = useState<RabbitHoleNarrative | null>(null);
   const [connections, setConnections] = useState<Connection[]>([]);
   const [saved, setSaved] = useState(false);
+  const [shared, setShared] = useState<"idle" | "copied">("idle");
 
   const explore = useCallback(async () => {
     setState("loading");
     setSaved(false);
+    setShared("idle");
 
     try {
       const genRes = await fetch("/api/generate");
@@ -197,7 +136,6 @@ export default function Home() {
         (s) => s.title !== articles[index]?.title
       );
 
-      // Bridge: for every pair (A→deleted, deleted→B), create A→B
       const incoming = connections.filter((c) => c.to === index);
       const outgoing = connections.filter((c) => c.from === index);
       const bridges: Connection[] = [];
@@ -252,6 +190,19 @@ export default function Home() {
     setSaved(true);
   }, [articles, totalScore]);
 
+  const handleShare = useCallback(async () => {
+    if (articles.length === 0) return;
+    const encoded = encodeRabbitHole(articles.map((a) => a.title));
+    const url = `${window.location.origin}/share/${encoded}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setShared("copied");
+      setTimeout(() => setShared("idle"), 2500);
+    } catch {
+      window.prompt("Copy this link:", url);
+    }
+  }, [articles]);
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center relative">
       <AnimatePresence mode="wait">
@@ -280,16 +231,10 @@ export default function Home() {
               transition={{ type: "spring", damping: 18, stiffness: 100 }}
               className="relative z-10 leading-[0.9]"
             >
-              <span
-                className="block text-8xl md:text-[11rem] font-extrabold text-[#EF3922] tracking-tight"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
+              <span className="block text-8xl md:text-[11rem] font-extrabold text-brand tracking-tight font-display">
                 rabbit
               </span>
-              <span
-                className="block text-8xl md:text-[11rem] font-extrabold tracking-tight text-[#EF3922]"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
+              <span className="block text-8xl md:text-[11rem] font-extrabold tracking-tight text-brand font-display">
                 hole.
               </span>
             </motion.h1>
@@ -297,8 +242,7 @@ export default function Home() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="text-xl text-[#1a1520]/85 max-w-sm relative z-10 font-medium"
-              style={{ fontFamily: "var(--font-body)" }}
+              className="text-xl text-text-primary max-w-sm relative z-10 font-medium font-body"
             >
               Wander through Wikipedia.
               <br />
@@ -321,7 +265,7 @@ export default function Home() {
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ repeat: Infinity, duration: 2.5, ease: "linear" }}
-              className="w-16 h-16 rounded-full border-2 border-[#EF3922]/20 border-t-[#EF3922] border-r-[#F184EB]"
+              className="w-16 h-16 rounded-full border-2 border-brand-light border-t-brand border-r-grid"
             />
             <LoadingText />
             <motion.div
@@ -333,7 +277,7 @@ export default function Home() {
               {[0, 1, 2].map((i) => (
                 <motion.div
                   key={i}
-                  className="w-2 h-2 rounded-full bg-[#EF3922]/40"
+                  className="w-2 h-2 rounded-full bg-brand-medium"
                   animate={{
                     opacity: [0.3, 1, 0.3],
                     scale: [1, 1.4, 1],
@@ -366,14 +310,26 @@ export default function Home() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 2.5 }}
+                  onClick={handleShare}
+                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all font-body ${
+                    shared === "copied"
+                      ? "bg-emerald-500/20 text-emerald-700 border border-emerald-500/30"
+                      : "bg-surface-glass text-foreground border border-brand-light hover:bg-surface-translucent hover:border-brand-medium"
+                  }`}
+                >
+                  {shared === "copied" ? "Link copied!" : "Share"}
+                </motion.button>
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 2.5 }}
                   onClick={handleSave}
                   disabled={saved}
-                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all font-body ${
                     saved
                       ? "bg-emerald-500/20 text-emerald-700 border border-emerald-500/30"
-                      : "bg-white/40 text-[#1a1520] border border-[#EF3922]/20 hover:bg-white/60 hover:border-[#EF3922]/40"
+                      : "bg-surface-glass text-foreground border border-brand-light hover:bg-surface-translucent hover:border-brand-medium"
                   }`}
-                  style={{ fontFamily: "var(--font-body)" }}
                 >
                   {saved ? "Saved!" : "Save"}
                 </motion.button>

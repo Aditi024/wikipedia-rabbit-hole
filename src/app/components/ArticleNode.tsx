@@ -2,7 +2,7 @@
 
 import { forwardRef, useCallback } from "react";
 import { motion, useDragControls } from "framer-motion";
-import { RabbitHoleArticle } from "@/app/api/generate/route";
+import { RabbitHoleArticle } from "@/lib/types";
 
 interface ArticleNodeProps {
   article: RabbitHoleArticle;
@@ -101,7 +101,7 @@ const ArticleNode = forwardRef<HTMLDivElement, ArticleNodeProps>(
           zIndex: isSelected ? 40 : 10 + index,
         }}
       >
-        {/* Input port — left side — FILLED circle */}
+        {/* Input port — filled circle */}
         <div
           data-port="input"
           onPointerDown={stopPointer}
@@ -112,7 +112,7 @@ const ArticleNode = forwardRef<HTMLDivElement, ArticleNodeProps>(
           <div
             className={`w-3.5 h-3.5 rounded-full transition-all duration-150 ${isWiring ? "scale-[1.7] animate-pulse" : "hover:scale-150"}`}
             style={{
-              backgroundColor: isWiring ? "#EF3922" : portColor,
+              backgroundColor: isWiring ? "var(--color-brand)" : portColor,
               boxShadow: isWiring
                 ? "0 0 16px rgba(239,57,34,0.8), 0 0 30px rgba(239,57,34,0.3)"
                 : `0 0 6px ${portColor}40`,
@@ -120,7 +120,7 @@ const ArticleNode = forwardRef<HTMLDivElement, ArticleNodeProps>(
           />
         </div>
 
-        {/* Output port — right side — OUTLINED circle */}
+        {/* Output port — outlined circle */}
         <div
           data-port="output"
           onPointerDown={stopPointer}
@@ -131,7 +131,7 @@ const ArticleNode = forwardRef<HTMLDivElement, ArticleNodeProps>(
           <div
             className={`w-3.5 h-3.5 rounded-full border-[2.5px] transition-all duration-150 ${isWiring ? "scale-[1.7] animate-pulse" : "hover:scale-150"}`}
             style={{
-              borderColor: isWiring ? "#EF3922" : portColor,
+              borderColor: isWiring ? "var(--color-brand)" : portColor,
               backgroundColor: "transparent",
               boxShadow: isWiring
                 ? "0 0 16px rgba(239,57,34,0.8), 0 0 30px rgba(239,57,34,0.3)"
@@ -140,7 +140,7 @@ const ArticleNode = forwardRef<HTMLDivElement, ArticleNodeProps>(
           />
         </div>
 
-        {/* Card body — drag handle, and wiring target when in wiring mode */}
+        {/* Card body */}
         <div
           onPointerDown={startDrag}
           onClick={(e) => {
@@ -153,11 +153,11 @@ const ArticleNode = forwardRef<HTMLDivElement, ArticleNodeProps>(
           }}
           className={`
             w-44 rounded-2xl overflow-hidden select-none
-            bg-[#1a1520]/95 backdrop-blur-sm
+            bg-foreground/95 backdrop-blur-sm
             border-2 transition-all duration-300
             ${isWiring ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}
-            ${isSelected ? "border-[#EF3922]/40 shadow-[0_0_30px_rgba(239,57,34,0.15)]" : "border-white/20 hover:border-white/40"}
-            ${isWiring ? "border-[#EF3922]/40 shadow-[0_0_20px_rgba(239,57,34,0.2)]" : ""}
+            ${isSelected ? "border-brand-medium shadow-[0_0_30px_rgba(239,57,34,0.15)]" : "border-white/20 hover:border-white/40"}
+            ${isWiring ? "border-brand-medium shadow-[0_0_20px_rgba(239,57,34,0.2)]" : ""}
           `}
           style={
             isSelected && rarityColor
@@ -175,23 +175,17 @@ const ArticleNode = forwardRef<HTMLDivElement, ArticleNodeProps>(
               />
             </div>
           ) : (
-            <div className="w-full h-28 bg-gradient-to-br from-[#F184EB]/15 to-[#EF3922]/10 flex items-center justify-center">
+            <div className="w-full h-28 bg-gradient-to-br from-grid/15 to-brand/10 flex items-center justify-center">
               <span className="text-3xl opacity-30">?</span>
             </div>
           )}
 
           <div className="p-3">
-            <h3
-              className="text-[13px] font-bold text-white leading-snug line-clamp-2"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
+            <h3 className="text-[13px] font-bold text-white leading-snug line-clamp-2 font-display">
               {article.title}
             </h3>
             {article.description && (
-              <p
-                className="text-sm text-white/60 mt-1 line-clamp-1"
-                style={{ fontFamily: "var(--font-body)" }}
-              >
+              <p className="text-sm text-white/60 mt-1 line-clamp-1 font-body">
                 {article.description}
               </p>
             )}
@@ -215,7 +209,7 @@ const ArticleNode = forwardRef<HTMLDivElement, ArticleNodeProps>(
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: index * 0.25 + 0.15, type: "spring", stiffness: 400 }}
-          className="absolute -top-2 -left-2 w-6 h-6 rounded-full bg-[#EF3922] text-white text-xs font-bold flex items-center justify-center shadow-lg pointer-events-none"
+          className="absolute -top-2 -left-2 w-6 h-6 rounded-full bg-brand text-white text-xs font-bold flex items-center justify-center shadow-lg pointer-events-none"
         >
           {index + 1}
         </motion.div>
@@ -228,7 +222,7 @@ const ArticleNode = forwardRef<HTMLDivElement, ArticleNodeProps>(
             e.stopPropagation();
             onRemove();
           }}
-          className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white/80 border border-[#1a1520]/10 text-[#1a1520]/50 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-500/80 hover:border-red-400 hover:text-white transition-all duration-200 z-20"
+          className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white/80 border border-foreground/10 text-text-faint text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-500/80 hover:border-red-400 hover:text-white transition-all duration-200 z-20"
         >
           &times;
         </motion.button>

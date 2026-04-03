@@ -9,15 +9,12 @@ import {
   SavedRabbitHole,
   ExplorerStats,
 } from "@/lib/storage";
+import { DEFAULT_STATS } from "@/lib/config";
 import Link from "next/link";
 
 export default function CollectionPage() {
   const [holes, setHoles] = useState<SavedRabbitHole[]>([]);
-  const [stats, setStats] = useState<ExplorerStats>({
-    totalExplored: 0,
-    totalGems: 0,
-    rarestFind: null,
-  });
+  const [stats, setStats] = useState<ExplorerStats>({ ...DEFAULT_STATS });
   const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
@@ -36,43 +33,36 @@ export default function CollectionPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1
-          className="text-4xl font-bold text-[#EF3922] mb-3"
-          style={{ fontFamily: "var(--font-display)" }}
-        >
+        <h1 className="text-4xl font-bold text-brand mb-3 font-display">
           Your Collection
         </h1>
-        <p
-          className="text-lg text-[#1a1520]/80 mb-8"
-          style={{ fontFamily: "var(--font-body)" }}
-        >
+        <p className="text-lg text-text-secondary mb-8 font-body">
           Rabbit holes you&apos;ve saved along the way.
         </p>
       </motion.div>
 
-      {/* Stats */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
         className="grid grid-cols-3 gap-4 mb-10"
       >
-        <div className="bg-white/40 border border-[#EF3922]/10 rounded-2xl p-5 text-center">
-          <p className="text-2xl font-bold text-[#EF3922]" style={{ fontFamily: "var(--font-display)" }}>{stats.totalExplored}</p>
-          <p className="text-sm text-[#1a1520]/80 font-medium mt-1" style={{ fontFamily: "var(--font-body)" }}>Holes Explored</p>
+        <div className="bg-surface-glass border border-brand-subtle rounded-2xl p-5 text-center">
+          <p className="text-2xl font-bold text-brand font-display">{stats.totalExplored}</p>
+          <p className="text-sm text-text-secondary font-medium mt-1 font-body">Holes Explored</p>
         </div>
-        <div className="bg-white/40 border border-[#EF3922]/10 rounded-2xl p-5 text-center">
-          <p className="text-2xl font-bold text-[#EF3922]" style={{ fontFamily: "var(--font-display)" }}>{stats.totalGems}</p>
-          <p className="text-sm text-[#1a1520]/80 font-medium mt-1" style={{ fontFamily: "var(--font-body)" }}>Total Gems</p>
+        <div className="bg-surface-glass border border-brand-subtle rounded-2xl p-5 text-center">
+          <p className="text-2xl font-bold text-brand font-display">{stats.totalGems}</p>
+          <p className="text-sm text-text-secondary font-medium mt-1 font-body">Total Gems</p>
         </div>
-        <div className="bg-white/40 border border-[#EF3922]/10 rounded-2xl p-5 text-center">
-          <p className="text-sm font-bold text-[#1a1520] truncate" style={{ fontFamily: "var(--font-display)" }}>
+        <div className="bg-surface-glass border border-brand-subtle rounded-2xl p-5 text-center">
+          <p className="text-sm font-bold text-foreground truncate font-display">
             {stats.rarestFind?.title || "---"}
           </p>
-          <p className="text-sm text-[#1a1520]/80 font-medium mt-1" style={{ fontFamily: "var(--font-body)" }}>
+          <p className="text-sm text-text-secondary font-medium mt-1 font-body">
             Rarest Find
             {stats.rarestFind && (
-              <span className="text-[#EF3922] ml-1">
+              <span className="text-brand ml-1">
                 ({stats.rarestFind.rarity})
               </span>
             )}
@@ -80,7 +70,6 @@ export default function CollectionPage() {
         </div>
       </motion.div>
 
-      {/* Saved holes */}
       {holes.length === 0 ? (
         <motion.div
           initial={{ opacity: 0 }}
@@ -88,11 +77,10 @@ export default function CollectionPage() {
           transition={{ delay: 0.2 }}
           className="text-center py-20"
         >
-          <p className="text-[#1a1520]/80 text-lg mb-4" style={{ fontFamily: "var(--font-body)" }}>No saved rabbit holes yet.</p>
+          <p className="text-text-secondary text-lg mb-4 font-body">No saved rabbit holes yet.</p>
           <Link
             href="/"
-            className="inline-flex px-6 py-3 rounded-full bg-[#EF3922] text-white font-semibold text-sm hover:bg-[#d42f1a] transition-colors"
-            style={{ fontFamily: "var(--font-display)" }}
+            className="inline-flex px-6 py-3 rounded-full bg-brand text-white font-semibold text-sm hover:bg-brand-hover transition-colors font-display"
           >
             Start Exploring
           </Link>
@@ -107,20 +95,20 @@ export default function CollectionPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -100 }}
                 transition={{ delay: i * 0.05 }}
-                className="bg-white/40 border border-[#EF3922]/10 rounded-2xl overflow-hidden"
+                className="bg-surface-glass border border-brand-subtle rounded-2xl overflow-hidden"
               >
                 <button
                   onClick={() =>
                     setExpanded(expanded === hole.id ? null : hole.id)
                   }
-                  className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-white/30 transition-colors"
+                  className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-surface-glass/60 transition-colors"
                 >
                   <div className="flex items-center gap-4 min-w-0">
                     <div className="flex -space-x-2">
                       {hole.articles.slice(0, 3).map((a) => (
                         <div
                           key={a.title}
-                          className="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-[#F184EB]/20"
+                          className="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-grid/20"
                         >
                           {a.thumbnail && (
                             <img
@@ -133,21 +121,21 @@ export default function CollectionPage() {
                       ))}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-[#1a1520] truncate">
+                      <p className="text-sm font-medium text-foreground truncate">
                         {hole.articles[0]?.title} &rarr;{" "}
                         {hole.articles[hole.articles.length - 1]?.title}
                       </p>
-                      <p className="text-sm text-[#1a1520]/70 font-medium" style={{ fontFamily: "var(--font-body)" }}>
+                      <p className="text-sm text-text-muted font-medium font-body">
                         {new Date(hole.createdAt).toLocaleDateString()} &middot;{" "}
                         {hole.articles.length} articles
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-bold text-[#EF3922]">
+                    <span className="text-sm font-bold text-brand">
                       {hole.gemScore} pts
                     </span>
-                    <span className="text-[#1a1520]/50 text-xs">
+                    <span className="text-text-faint text-xs">
                       {expanded === hole.id ? "v" : ">"}
                     </span>
                   </div>
@@ -161,16 +149,16 @@ export default function CollectionPage() {
                       exit={{ height: 0, opacity: 0 }}
                       className="overflow-hidden"
                     >
-                      <div className="px-5 pb-4 space-y-2 border-t border-[#1a1520]/5 pt-3">
+                      <div className="px-5 pb-4 space-y-2 border-t border-foreground/5 pt-3">
                         {hole.articles.map((article, j) => (
                           <div
                             key={article.title}
                             className="flex items-center gap-3"
                           >
-                            <span className="text-xs text-[#1a1520]/60 font-medium w-4">
+                            <span className="text-xs text-text-muted font-medium w-4">
                               {j + 1}.
                             </span>
-                            <div className="w-6 h-6 rounded overflow-hidden bg-[#F184EB]/15 shrink-0">
+                            <div className="w-6 h-6 rounded overflow-hidden bg-grid/15 shrink-0">
                               {article.thumbnail && (
                                 <img
                                   src={article.thumbnail}
@@ -183,7 +171,7 @@ export default function CollectionPage() {
                               href={article.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-sm text-[#1a1520]/80 hover:text-[#EF3922] transition-colors truncate"
+                              className="text-sm text-text-secondary hover:text-brand transition-colors truncate"
                             >
                               {article.title}
                             </a>

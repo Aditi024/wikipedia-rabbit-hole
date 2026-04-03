@@ -29,7 +29,7 @@ export default function ConnectionLines({
         <g key={conn.id}>
           <motion.path
             d={conn.path}
-            stroke="#1a1520"
+            stroke="var(--color-foreground)"
             strokeWidth={2}
             strokeOpacity={0.3}
             fill="none"

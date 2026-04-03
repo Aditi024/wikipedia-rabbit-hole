@@ -1,4 +1,6 @@
-import { RabbitHoleArticle } from "@/app/api/generate/route";
+import { RabbitHoleArticle } from "./types";
+import { GemRarity } from "./scoring";
+import { RARITY_ORDER, DEFAULT_STATS } from "./config";
 
 export interface SavedRabbitHole {
   id: string;
@@ -47,15 +49,12 @@ export function deleteRabbitHole(id: string) {
 }
 
 export function getStats(): ExplorerStats {
-  if (typeof window === "undefined")
-    return { totalExplored: 0, totalGems: 0, rarestFind: null };
+  if (typeof window === "undefined") return { ...DEFAULT_STATS };
   try {
     const raw = localStorage.getItem(STATS_KEY);
-    return raw
-      ? JSON.parse(raw)
-      : { totalExplored: 0, totalGems: 0, rarestFind: null };
+    return raw ? JSON.parse(raw) : { ...DEFAULT_STATS };
   } catch {
-    return { totalExplored: 0, totalGems: 0, rarestFind: null };
+    return { ...DEFAULT_STATS };
   }
 }
 
@@ -64,11 +63,10 @@ export function updateStats(gemScore: number, rarestArticle?: { title: string; r
   stats.totalExplored += 1;
   stats.totalGems += gemScore;
   if (rarestArticle) {
-    const rarityOrder = ["Common", "Uncommon", "Rare", "Epic", "Legendary"];
     const currentIdx = stats.rarestFind
-      ? rarityOrder.indexOf(stats.rarestFind.rarity)
+      ? RARITY_ORDER.indexOf(stats.rarestFind.rarity as GemRarity)
       : -1;
-    const newIdx = rarityOrder.indexOf(rarestArticle.rarity);
+    const newIdx = RARITY_ORDER.indexOf(rarestArticle.rarity as GemRarity);
     if (newIdx > currentIdx) {
       stats.rarestFind = rarestArticle;
     }

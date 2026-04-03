@@ -7,14 +7,8 @@ import {
   ArticleSummary,
 } from "@/lib/wikipedia";
 
-export interface RabbitHoleArticle {
-  title: string;
-  description?: string;
-  extract: string;
-  thumbnail?: string;
-  url: string;
-  monthlyViews: number;
-}
+export type { RabbitHoleArticle } from "@/lib/types";
+import type { RabbitHoleArticle } from "@/lib/types";
 
 function toArticle(summary: ArticleSummary): RabbitHoleArticle {
   return {
