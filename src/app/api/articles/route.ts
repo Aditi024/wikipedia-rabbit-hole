@@ -41,9 +41,13 @@ export async function POST(request: NextRequest) {
     }
 
     const linkContexts = await Promise.all(
-      articles.slice(0, -1).map((article, i) =>
-        getLinkContext(article.title, articles[i + 1].title).catch(() => null)
-      )
+      articles.slice(0, -1).map(async (article, i) => {
+        const next = articles[i + 1];
+        const forward = await getLinkContext(article.title, next.title).catch(() => null);
+        if (forward) return forward;
+        const reverse = await getLinkContext(next.title, article.title).catch(() => null);
+        return reverse;
+      })
     );
 
     return NextResponse.json({ articles, linkContexts });

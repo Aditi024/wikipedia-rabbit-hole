@@ -105,9 +105,13 @@ export async function GET() {
     }
 
     const linkContexts = await Promise.all(
-      chain.slice(0, -1).map((article, i) =>
-        getLinkContext(article.title, chain[i + 1].title).catch(() => null)
-      )
+      chain.slice(0, -1).map(async (article, i) => {
+        const next = chain[i + 1];
+        const forward = await getLinkContext(article.title, next.title).catch(() => null);
+        if (forward) return forward;
+        const reverse = await getLinkContext(next.title, article.title).catch(() => null);
+        return reverse;
+      })
     );
 
     return NextResponse.json({ articles: chain, linkContexts });

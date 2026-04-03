@@ -27,15 +27,22 @@ function firstSentence(text: string): string {
   return match ? match[0].trim() : text.slice(0, 120).trim();
 }
 
+const BRIDGES = [
+  (a: string, b: string) => `${a} — which brings us to ${b}`,
+  (a: string, b: string) => `${a} This connects to a different thread: ${b}`,
+  (a: string, b: string) => `Starting from the fact that ${a.charAt(0).toLowerCase() + a.slice(1)} Meanwhile, ${b.charAt(0).toLowerCase() + b.slice(1)}`,
+];
+
 /**
  * Builds a connection description from available data, in priority order:
  * 1. Real Wikipedia link context (the paragraph where the link lives)
- * 2. Extract-based first sentences that paint the picture
+ * 2. Extract-based first sentences woven with a varied bridge phrase
  */
 function buildConnection(
   from: RabbitHoleArticle,
   to: RabbitHoleArticle,
-  linkContext: string | null
+  linkContext: string | null,
+  index: number
 ): string {
   if (linkContext) {
     return linkContext;
@@ -43,7 +50,8 @@ function buildConnection(
 
   const fromSentence = firstSentence(from.extract);
   const toSentence = firstSentence(to.extract);
-  return `${fromSentence} From there, the trail leads to: ${toSentence}`;
+  const bridge = BRIDGES[index % BRIDGES.length];
+  return bridge(fromSentence, toSentence);
 }
 
 const OPENERS = [
@@ -94,7 +102,7 @@ export function generateNarrative(
     let connection = "";
     if (i < articles.length - 1) {
       const ctx = linkContexts?.[i] ?? null;
-      connection = buildConnection(article, articles[i + 1], ctx);
+      connection = buildConnection(article, articles[i + 1], ctx, i);
     }
     return { title: article.title, connection };
   });
