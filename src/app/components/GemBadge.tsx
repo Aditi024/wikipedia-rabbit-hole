@@ -42,6 +42,13 @@ const RARITY_CONFIG: Record<
     border: "border-amber-500/40",
     emoji: "***",
   },
+  Unknown: {
+    label: "Unscored",
+    bg: "bg-gray-400/10",
+    text: "text-gray-400",
+    border: "border-gray-400/30",
+    emoji: "?",
+  },
 };
 
 export default function GemBadge({ rarity }: { rarity: GemRarity }) {

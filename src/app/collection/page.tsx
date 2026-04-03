@@ -50,6 +50,7 @@ export default function CollectionPage() {
   const [stats, setStats] = useState<ExplorerStats>({ ...DEFAULT_STATS });
   const [expanded, setExpanded] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(20);
 
   useEffect(() => {
     setHoles(getSavedHoles());
@@ -128,7 +129,7 @@ export default function CollectionPage() {
       ) : (
         <div className="space-y-3">
           <AnimatePresence>
-            {holes.map((hole, i) => {
+            {holes.slice(0, visibleCount).map((hole, i) => {
               const first = hole.articles[0];
               const last = hole.articles[hole.articles.length - 1];
               const isExpanded = expanded === hole.id;
@@ -139,7 +140,7 @@ export default function CollectionPage() {
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -80 }}
-                  transition={{ delay: 0.05 + i * 0.04 }}
+                  transition={{ delay: Math.min(0.05 + i * 0.04, 0.5) }}
                   className="bg-surface-frosted backdrop-blur-sm border border-brand-subtle rounded-2xl overflow-hidden hover:border-brand-light transition-all"
                 >
                   <button
@@ -259,6 +260,14 @@ export default function CollectionPage() {
               );
             })}
           </AnimatePresence>
+          {visibleCount < holes.length && (
+            <button
+              onClick={() => setVisibleCount((c) => c + 20)}
+              className="w-full py-3 text-sm font-medium text-text-muted hover:text-brand transition-colors font-body"
+            >
+              Show more ({holes.length - visibleCount} remaining)
+            </button>
+          )}
         </div>
       )}
     </div>

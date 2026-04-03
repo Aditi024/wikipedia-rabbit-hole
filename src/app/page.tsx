@@ -34,6 +34,7 @@ export default function Home() {
   const [showPostSave, setShowPostSave] = useState(false);
   const [shared, setShared] = useState<"idle" | "copied">("idle");
   const revealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (state === "reveal") {
@@ -47,6 +48,14 @@ export default function Home() {
     }
   }, [state]);
 
+  const cancelExplore = useCallback(() => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+    setState("landing");
+  }, []);
+
   const skipReveal = useCallback(() => {
     if (state !== "reveal") return;
     if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
@@ -54,14 +63,22 @@ export default function Home() {
   }, [state]);
 
   const explore = useCallback(async () => {
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setState("loading");
     setSaved(false);
     setShowPostSave(false);
     setShared("idle");
 
     try {
-      const genRes = await fetch("/api/generate");
+      const genRes = await fetch("/api/generate", {
+        signal: controller.signal,
+      });
       const genData = await genRes.json();
+
+      if (controller.signal.aborted) return;
 
       if (!genData.articles || genData.articles.length === 0) {
         throw new Error("No articles returned");
@@ -72,6 +89,8 @@ export default function Home() {
       const nodePositions = generateNodePositions(chain.length);
       const defaultConns = buildDefaultConnections(chain.length);
       const holeNarrative = generateNarrative(chain, linkContexts);
+
+      if (controller.signal.aborted) return;
 
       setArticles(chain);
       setPositions(nodePositions);
@@ -86,8 +105,12 @@ export default function Home() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ titles: chain.map((a) => a.title) }),
+          signal: controller.signal,
         });
         const scoreData = await scoreRes.json();
+
+        if (controller.signal.aborted) return;
+
         setScores(scoreData.scores || []);
         setTotalScore(scoreData.totalScore || 0);
 
@@ -106,6 +129,7 @@ export default function Home() {
         // Scoring is non-critical
       }
     } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
       console.error("Failed to explore:", error);
       setState("landing");
     }
@@ -183,9 +207,9 @@ export default function Home() {
       gemScore: totalScore,
       createdAt: new Date().toISOString(),
     };
-    saveRabbitHole(hole);
-    setSaved(true);
-    setShowPostSave(true);
+    const success = saveRabbitHole(hole);
+    setSaved(success);
+    if (success) setShowPostSave(true);
   }, [articles, totalScore]);
 
   const handleShare = useCallback(async () => {
@@ -255,7 +279,7 @@ export default function Home() {
         {state === "loading" && (
           <LoadingTunnel
             key="loading"
-            onCancel={() => setState("landing")}
+            onCancel={cancelExplore}
           />
         )}
 

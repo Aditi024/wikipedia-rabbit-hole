@@ -5,6 +5,18 @@ const headers: HeadersInit = {
   Accept: "application/json",
 };
 
+const FETCH_TIMEOUT_MS = 8000;
+
+function fetchWithTimeout(
+  url: string,
+  opts: RequestInit = {}
+): Promise<Response> {
+  return fetch(url, {
+    ...opts,
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
+}
+
 export interface ArticleSummary {
   title: string;
   displaytitle: string;
@@ -28,7 +40,7 @@ export interface ArticleSummary {
 }
 
 export async function getRandomArticle(): Promise<ArticleSummary> {
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     "https://en.wikipedia.org/api/rest_v1/page/random/summary",
     { headers, redirect: "follow" }
   );
@@ -40,7 +52,7 @@ export async function getArticleSummary(
   title: string
 ): Promise<ArticleSummary> {
   const encoded = encodeURIComponent(title.replace(/ /g, "_"));
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     `https://en.wikipedia.org/api/rest_v1/page/summary/${encoded}`,
     { headers }
   );
@@ -60,7 +72,7 @@ export async function getArticleLinks(title: string): Promise<string[]> {
     origin: "*",
   });
 
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     `https://en.wikipedia.org/w/api.php?${params.toString()}`,
     { headers }
   );
@@ -88,7 +100,7 @@ export async function getPageViews(title: string): Promise<number> {
     `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
 
   try {
-    const res = await fetch(
+    const res = await fetchWithTimeout(
       `https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/${encoded}/daily/${fmt(start)}/${fmt(end)}`,
       { headers }
     );
@@ -172,7 +184,7 @@ export async function getLinkContext(
   });
 
   try {
-    const res = await fetch(
+    const res = await fetchWithTimeout(
       `https://en.wikipedia.org/w/api.php?${params.toString()}`,
       { headers }
     );

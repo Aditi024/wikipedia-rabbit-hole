@@ -1,4 +1,4 @@
-export type GemRarity = "Common" | "Uncommon" | "Rare" | "Epic" | "Legendary";
+export type GemRarity = "Common" | "Uncommon" | "Rare" | "Epic" | "Legendary" | "Unknown";
 
 export interface GemInfo {
   rarity: GemRarity;
@@ -13,10 +13,11 @@ const RARITY_MAP: Record<GemRarity, Omit<GemInfo, "rarity">> = {
   Rare: { points: 3, color: "#2563EB", glow: "rgba(37,99,235,0.3)" },
   Epic: { points: 4, color: "#7C3AED", glow: "rgba(124,58,237,0.4)" },
   Legendary: { points: 5, color: "#B45309", glow: "rgba(180,83,9,0.5)" },
+  Unknown: { points: 0, color: "#9CA3AF", glow: "rgba(156,163,175,0.2)" },
 };
 
 export function getGemRarity(monthlyViews: number): GemRarity {
-  if (monthlyViews < 0) return "Common";
+  if (monthlyViews < 0) return "Unknown";
   if (monthlyViews < 100) return "Legendary";
   if (monthlyViews < 1000) return "Epic";
   if (monthlyViews < 10000) return "Rare";

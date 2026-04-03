@@ -9,6 +9,7 @@ export const COLORS = {
 } as const;
 
 export const RARITY_ORDER: GemRarity[] = [
+  "Unknown",
   "Common",
   "Uncommon",
   "Rare",

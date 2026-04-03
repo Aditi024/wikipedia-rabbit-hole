@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
   getRandomArticle,
   getArticleSummary,
@@ -7,6 +7,7 @@ import {
   pickInterestingLinks,
   ArticleSummary,
 } from "@/lib/wikipedia";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export type { RabbitHoleArticle } from "@/lib/types";
 import type { RabbitHoleArticle } from "@/lib/types";
@@ -43,7 +44,16 @@ function isQualityArticle(summary: ArticleSummary): boolean {
   return len > 150 && hasThumbnail && hasDescription;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const { ok } = checkRateLimit(ip);
+  if (!ok) {
+    return NextResponse.json(
+      { error: "Too many requests. Please wait a moment." },
+      { status: 429 }
+    );
+  }
+
   try {
     const chain: RabbitHoleArticle[] = [];
     const seenTitles = new Set<string>();

@@ -2,13 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { getPageViews } from "@/lib/wikipedia";
 import { getGemInfo, getTotalScore } from "@/lib/scoring";
 
+const MAX_TITLES = 10;
+
 export async function POST(request: NextRequest) {
   try {
     const { titles } = await request.json();
 
-    if (!titles || !Array.isArray(titles)) {
+    if (!titles || !Array.isArray(titles) || titles.length > MAX_TITLES) {
       return NextResponse.json(
-        { error: "titles array is required" },
+        { error: `titles must be an array of 1-${MAX_TITLES} items` },
         { status: 400 }
       );
     }

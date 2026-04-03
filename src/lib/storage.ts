@@ -2,6 +2,8 @@ import { RabbitHoleArticle } from "./types";
 import { GemRarity } from "./scoring";
 import { RARITY_ORDER, DEFAULT_STATS } from "./config";
 
+const SCHEMA_VERSION = 1;
+
 export interface SavedRabbitHole {
   id: string;
   articles: RabbitHoleArticle[];
@@ -9,8 +11,14 @@ export interface SavedRabbitHole {
   createdAt: string;
 }
 
+interface StorageEnvelope<T> {
+  version: number;
+  data: T;
+}
+
 const STORAGE_KEY = "rabbit-hole-collection";
 const STATS_KEY = "rabbit-hole-stats";
+const MAX_SAVED_HOLES = 200;
 
 export interface ExplorerStats {
   totalExplored: number;
@@ -18,44 +26,58 @@ export interface ExplorerStats {
   rarestFind: { title: string; rarity: string } | null;
 }
 
-function getCollection(): SavedRabbitHole[] {
-  if (typeof window === "undefined") return [];
+function safeParse<T>(raw: string | null, fallback: T): T {
+  if (!raw) return fallback;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && "version" in parsed && "data" in parsed) {
+      return (parsed as StorageEnvelope<T>).data;
+    }
+    return parsed as T;
   } catch {
-    return [];
+    return fallback;
   }
 }
 
-function saveCollection(collection: SavedRabbitHole[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(collection));
+function safeWrite(key: string, data: unknown): boolean {
+  try {
+    const envelope: StorageEnvelope<unknown> = { version: SCHEMA_VERSION, data };
+    localStorage.setItem(key, JSON.stringify(envelope));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function getCollection(): SavedRabbitHole[] {
+  if (typeof window === "undefined") return [];
+  return safeParse<SavedRabbitHole[]>(localStorage.getItem(STORAGE_KEY), []);
 }
 
 export function getSavedHoles(): SavedRabbitHole[] {
   return getCollection();
 }
 
-export function saveRabbitHole(hole: SavedRabbitHole) {
+export function saveRabbitHole(hole: SavedRabbitHole): boolean {
   const collection = getCollection();
-  if (collection.some((h) => h.id === hole.id)) return;
+  if (collection.some((h) => h.id === hole.id)) return true;
   collection.unshift(hole);
-  saveCollection(collection);
+
+  if (collection.length > MAX_SAVED_HOLES) {
+    collection.length = MAX_SAVED_HOLES;
+  }
+
+  return safeWrite(STORAGE_KEY, collection);
 }
 
 export function deleteRabbitHole(id: string) {
   const collection = getCollection().filter((h) => h.id !== id);
-  saveCollection(collection);
+  safeWrite(STORAGE_KEY, collection);
 }
 
 export function getStats(): ExplorerStats {
   if (typeof window === "undefined") return { ...DEFAULT_STATS };
-  try {
-    const raw = localStorage.getItem(STATS_KEY);
-    return raw ? JSON.parse(raw) : { ...DEFAULT_STATS };
-  } catch {
-    return { ...DEFAULT_STATS };
-  }
+  return safeParse<ExplorerStats>(localStorage.getItem(STATS_KEY), { ...DEFAULT_STATS });
 }
 
 export function updateStats(gemScore: number, rarestArticle?: { title: string; rarity: string }) {
@@ -71,5 +93,5 @@ export function updateStats(gemScore: number, rarestArticle?: { title: string; r
       stats.rarestFind = rarestArticle;
     }
   }
-  localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+  safeWrite(STATS_KEY, stats);
 }

@@ -6,7 +6,7 @@ import { decodeRabbitHole } from "@/lib/share";
 import { RabbitHoleArticle, ScoreInfo, Connection } from "@/lib/types";
 import { generateNodePositions, NodePosition } from "@/lib/layout";
 import { generateNarrative, RabbitHoleNarrative } from "@/lib/narrative";
-import { buildDefaultConnections } from "@/lib/graph";
+import { buildDefaultConnections, tracePathFromConnections } from "@/lib/graph";
 import { saveRabbitHole } from "@/lib/storage";
 import NodeCanvas from "@/app/components/NodeCanvas";
 import ExploreButton from "@/app/components/ExploreButton";
@@ -86,14 +86,68 @@ export default function SharePage({
     })();
   }, [id]);
 
-  const handleConnectionsChange = (newConnections: Connection[]) => {
-    setConnections(newConnections);
-  };
+  const handleConnectionsChange = useCallback(
+    (newConnections: Connection[]) => {
+      setConnections(newConnections);
+      const pathArticles = tracePathFromConnections(newConnections, articles);
+      if (pathArticles.length >= 2) {
+        setNarrative(generateNarrative(pathArticles));
+      } else {
+        setNarrative(null);
+      }
+    },
+    [articles]
+  );
 
-  const handleRemoveArticle = (index: number) => {
-    setArticles((prev) => prev.filter((_, i) => i !== index));
-    setPositions((prev) => prev.filter((_, i) => i !== index));
-  };
+  const handleRemoveArticle = useCallback(
+    (index: number) => {
+      const newArticles = articles.filter((_, i) => i !== index);
+      const newPositions = positions.filter((_, i) => i !== index);
+      const newScores = scores.filter(
+        (s) => s.title !== articles[index]?.title
+      );
+
+      const incoming = connections.filter((c) => c.to === index);
+      const outgoing = connections.filter((c) => c.from === index);
+      const bridges: Connection[] = [];
+      for (const inc of incoming) {
+        for (const out of outgoing) {
+          const alreadyExists = connections.some(
+            (c) => c.from === inc.from && c.to === out.to
+          );
+          if (!alreadyExists && inc.from !== out.to) {
+            bridges.push({ from: inc.from, to: out.to });
+          }
+        }
+      }
+
+      const reindex = (idx: number) => (idx > index ? idx - 1 : idx);
+      const newConnections = [
+        ...connections.filter((c) => c.from !== index && c.to !== index),
+        ...bridges,
+      ].map((c) => ({ from: reindex(c.from), to: reindex(c.to) }));
+
+      setArticles(newArticles);
+      setPositions(newPositions);
+      setScores(newScores);
+      setConnections(newConnections);
+
+      if (newArticles.length >= 2) {
+        const pathArticles = tracePathFromConnections(
+          newConnections,
+          newArticles
+        );
+        setNarrative(generateNarrative(pathArticles));
+        setTotalScore(newScores.reduce((sum, s) => sum + s.points, 0));
+      } else if (newArticles.length === 0) {
+        setState("error");
+      } else {
+        setNarrative(null);
+        setTotalScore(newScores.reduce((sum, s) => sum + s.points, 0));
+      }
+    },
+    [articles, positions, scores, connections]
+  );
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center relative">
