@@ -78,65 +78,62 @@ export default function NodeCanvas({
     return map;
   }, [scores]);
 
-  const computeConnectionPaths = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const canvasRect = canvas.getBoundingClientRect();
+  // Continuously sync wires to port positions via rAF.
+  // This keeps wires magnetically attached during float animations, drags, etc.
+  const rafRef = useRef<number>(0);
+  const prevPathsRef = useRef<string>("");
 
-    const paths: ConnectionPath[] = [];
+  useEffect(() => {
+    const tick = () => {
+      const canvas = canvasRef.current;
+      if (canvas && connections.length > 0) {
+        const canvasRect = canvas.getBoundingClientRect();
+        const paths: ConnectionPath[] = [];
 
-    for (const conn of connections) {
-      const fromEl = nodeRefs.current[conn.from];
-      const toEl = nodeRefs.current[conn.to];
-      if (!fromEl || !toEl) continue;
+        for (const conn of connections) {
+          const fromEl = nodeRefs.current[conn.from];
+          const toEl = nodeRefs.current[conn.to];
+          if (!fromEl || !toEl) continue;
 
-      const outputPort = fromEl.querySelector('[data-port="output"]');
-      const inputPort = toEl.querySelector('[data-port="input"]');
-      if (!outputPort || !inputPort) continue;
+          const outputPort = fromEl.querySelector('[data-port="output"]');
+          const inputPort = toEl.querySelector('[data-port="input"]');
+          if (!outputPort || !inputPort) continue;
 
-      const out = getPortCenter(outputPort, canvasRect);
-      const inp = getPortCenter(inputPort, canvasRect);
+          const out = getPortCenter(outputPort, canvasRect);
+          const inp = getPortCenter(inputPort, canvasRect);
 
-      const dx = inp.x - out.x;
-      const dy = inp.y - out.y;
-      const absDx = Math.abs(dx);
+          const dx = inp.x - out.x;
+          const absDx = Math.abs(dx);
+          const dy = inp.y - out.y;
 
-      // Origami-style: always extend handles horizontally outward
-      // Handle length scales with distance but has sensible bounds
-      let handleLen: number;
-      if (dx > 0) {
-        // Target is to the right (normal flow)
-        handleLen = Math.min(Math.max(absDx * 0.45, 60), 200);
-      } else {
-        // Target is to the left (reverse) — need wider arc to avoid overlap
-        handleLen = Math.min(Math.max(absDx * 0.5 + Math.abs(dy) * 0.3, 100), 300);
+          let handleLen: number;
+          if (dx > 0) {
+            handleLen = Math.min(Math.max(absDx * 0.45, 60), 200);
+          } else {
+            handleLen = Math.min(Math.max(absDx * 0.5 + Math.abs(dy) * 0.3, 100), 300);
+          }
+
+          const path = `M ${out.x} ${out.y} C ${out.x + handleLen} ${out.y}, ${inp.x - handleLen} ${inp.y}, ${inp.x} ${inp.y}`;
+          paths.push({
+            id: `${conn.from}-${conn.to}`,
+            path,
+            fromIndex: conn.from,
+            toIndex: conn.to,
+          });
+        }
+
+        const key = paths.map((p) => p.path).join("|");
+        if (key !== prevPathsRef.current) {
+          prevPathsRef.current = key;
+          setConnectionPaths(paths);
+        }
       }
+      rafRef.current = requestAnimationFrame(tick);
+    };
 
-      const path = `M ${out.x} ${out.y} C ${out.x + handleLen} ${out.y}, ${inp.x - handleLen} ${inp.y}, ${inp.x} ${inp.y}`;
-
-      paths.push({
-        id: `${conn.from}-${conn.to}`,
-        path,
-        fromIndex: conn.from,
-        toIndex: conn.to,
-      });
-    }
-
-    setConnectionPaths(paths);
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
   }, [connections]);
-
-  useEffect(() => {
-    computeConnectionPaths();
-    const t1 = setTimeout(computeConnectionPaths, 100);
-    const t2 = setTimeout(computeConnectionPaths, 400);
-    const t3 = setTimeout(computeConnectionPaths, 1000);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, [articles, positions, connections, computeConnectionPaths]);
-
-  useEffect(() => {
-    window.addEventListener("resize", computeConnectionPaths);
-    return () => window.removeEventListener("resize", computeConnectionPaths);
-  }, [computeConnectionPaths]);
 
   // Track mouse for pending connection line
   useEffect(() => {
@@ -286,7 +283,7 @@ export default function NodeCanvas({
           >
             <path
               d={pendingLine}
-              stroke="rgba(252,211,77,0.6)"
+              stroke="rgba(26,21,32,0.4)"
               strokeWidth={2}
               strokeDasharray="8 5"
               fill="none"
@@ -319,7 +316,7 @@ export default function NodeCanvas({
                   onRemoveArticle(i);
                 }}
                 onPortClick={handlePortClick}
-                onDragUpdate={computeConnectionPaths}
+                onDragUpdate={() => {}}
               />
             );
           })}
@@ -327,13 +324,13 @@ export default function NodeCanvas({
 
         {wiringFrom !== null && (
           <div
-            className="absolute top-4 left-1/2 -translate-x-1/2 z-30 px-5 py-2.5 bg-amber-300/10 border border-amber-300/20 rounded-full text-sm text-amber-50 backdrop-blur-sm"
+            className="absolute top-4 left-1/2 -translate-x-1/2 z-30 px-5 py-2.5 bg-white/70 border border-[#EF3922]/20 rounded-full text-sm font-medium text-[#1a1520] backdrop-blur-sm"
             style={{ fontFamily: "var(--font-body)" }}
           >
             Click on another card to connect &middot;{" "}
             <button
               data-cancel-wiring
-              className="text-amber-100/80 hover:text-white ml-1 font-medium"
+              className="text-[#EF3922] hover:text-[#d42f1a] ml-1 font-medium"
               style={{ fontFamily: "var(--font-display)" }}
             >
               Cancel

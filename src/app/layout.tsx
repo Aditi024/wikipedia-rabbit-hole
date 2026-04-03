@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Syne, Cormorant_Garamond, DM_Sans } from "next/font/google";
+import { Syne, DM_Sans } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 
@@ -7,13 +7,6 @@ const syne = Syne({
   variable: "--font-display",
   subsets: ["latin"],
   weight: ["400", "700", "800"],
-});
-
-const cormorant = Cormorant_Garamond({
-  variable: "--font-accent",
-  subsets: ["latin"],
-  weight: ["400"],
-  style: ["italic"],
 });
 
 const dmSans = DM_Sans({
@@ -24,7 +17,23 @@ const dmSans = DM_Sans({
 
 export const metadata: Metadata = {
   title: "Rabbit Hole - Wikipedia Adventures",
-  description: "Discover hidden gems in the Wikipedia universe",
+  description:
+    "Wander through Wikipedia. Connect random articles into surprising rabbit holes and discover hidden gems you never knew existed.",
+  metadataBase: new URL("https://rabbit-hole-i5rpppxw8-aditi024s-projects.vercel.app"),
+  openGraph: {
+    title: "Rabbit Hole",
+    description:
+      "Wander through Wikipedia. Find what you never knew you were looking for.",
+    siteName: "Rabbit Hole",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Rabbit Hole",
+    description:
+      "Wander through Wikipedia. Find what you never knew you were looking for.",
+  },
 };
 
 export default function RootLayout({
@@ -35,7 +44,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${syne.variable} ${cormorant.variable} ${dmSans.variable}`}
+      className={`${syne.variable} ${dmSans.variable}`}
     >
       <body
         className="min-h-screen flex flex-col universe-bg antialiased"
@@ -45,13 +54,16 @@ export default function RootLayout({
         <svg
           className="mesh-overlay"
           xmlns="http://www.w3.org/2000/svg"
+          width="100%"
+          height="100%"
+          preserveAspectRatio="none"
           aria-hidden="true"
         >
           <defs>
-            <filter id="warp">
+            <filter id="warp" x="-20%" y="-20%" width="140%" height="140%">
               <feTurbulence
                 type="turbulence"
-                baseFrequency="0.015"
+                baseFrequency="0.012 0.012"
                 numOctaves={3}
                 seed={4}
                 result="noise"
@@ -59,22 +71,22 @@ export default function RootLayout({
               <feDisplacementMap
                 in="SourceGraphic"
                 in2="noise"
-                scale={45}
+                scale={55}
                 xChannelSelector="R"
                 yChannelSelector="G"
               />
             </filter>
             <pattern
               id="mesh-grid"
-              width="50"
-              height="50"
+              width="45"
+              height="45"
               patternUnits="userSpaceOnUse"
             >
               <path
-                d="M 50 0 L 0 0 0 50"
+                d="M 45 0 L 0 0 0 45"
                 fill="none"
-                stroke="rgba(255,230,190,0.07)"
-                strokeWidth="0.8"
+                stroke="rgba(241,132,235,0.35)"
+                strokeWidth="0.7"
               />
             </pattern>
           </defs>
@@ -89,14 +101,14 @@ export default function RootLayout({
         <nav className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-8 py-5">
           <Link
             href="/"
-            className="text-xl font-extrabold text-amber-100 hover:text-white transition-colors tracking-tight"
+            className="text-xl font-extrabold text-[#EF3922] hover:text-[#d42f1a] transition-colors tracking-tight"
             style={{ fontFamily: "var(--font-display)" }}
           >
             rabbit hole
           </Link>
           <Link
             href="/collection"
-            className="text-base text-amber-100/80 hover:text-white transition-colors"
+            className="text-base font-medium text-[#1a1520] hover:text-[#EF3922] transition-colors"
             style={{ fontFamily: "var(--font-body)" }}
           >
             Collection

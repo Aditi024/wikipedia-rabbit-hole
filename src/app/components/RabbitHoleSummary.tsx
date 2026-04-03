@@ -37,7 +37,7 @@ export default function RabbitHoleSummary({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
             onClick={onClose}
           />
 
@@ -46,12 +46,12 @@ export default function RabbitHoleSummary({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 100 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed right-0 top-0 bottom-0 w-full max-w-lg bg-[#14111e]/98 backdrop-blur-lg border-l border-amber-200/15 z-50 overflow-y-auto"
+            className="fixed right-0 top-0 bottom-0 w-full max-w-lg bg-white/95 backdrop-blur-lg border-l border-[#EF3922]/10 z-50 overflow-y-auto"
           >
             <div className="p-8">
               <button
                 onClick={onClose}
-                className="absolute top-5 right-5 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/80 hover:text-white transition-colors text-lg"
+                className="absolute top-5 right-5 w-9 h-9 rounded-full bg-[#1a1520]/5 hover:bg-[#1a1520]/10 flex items-center justify-center text-[#1a1520]/60 hover:text-[#1a1520] transition-colors text-lg"
               >
                 &times;
               </button>
@@ -62,21 +62,21 @@ export default function RabbitHoleSummary({
                 transition={{ delay: 0.1 }}
               >
                 <p
-                  className="text-sm uppercase tracking-[0.2em] text-amber-300/80 mb-5"
+                  className="text-sm uppercase tracking-[0.2em] text-[#EF3922] font-semibold mb-5"
                   style={{ fontFamily: "var(--font-body)" }}
                 >
                   The Rabbit Hole
                 </p>
 
                 <h2
-                  className="text-2xl md:text-3xl font-bold text-white leading-tight mb-5 capitalize"
+                  className="text-2xl md:text-3xl font-bold text-[#1a1520] leading-tight mb-5 capitalize"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   &ldquo;{narrative.pullQuote}&rdquo;
                 </h2>
 
                 <p
-                  className="text-base text-amber-50/90 leading-[1.75] mb-8"
+                  className="text-base text-[#1a1520]/75 leading-[1.75] mb-8"
                   style={{ fontFamily: "var(--font-body)" }}
                 >
                   {narrative.summary}
@@ -107,14 +107,14 @@ export default function RabbitHoleSummary({
                             {i + 1}
                           </div>
                           {i < narrative.steps.length - 1 && (
-                            <div className="w-px h-16 bg-gradient-to-b from-amber-200/25 to-transparent" />
+                            <div className="w-px h-16 bg-gradient-to-b from-[#EF3922]/20 to-transparent" />
                           )}
                         </div>
 
                         <div className="pb-6 min-w-0 flex-1">
                           <div className="flex items-start gap-3">
                             {article?.thumbnail && (
-                              <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-amber-200/15">
+                              <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-[#1a1520]/10">
                                 <img
                                   src={article.thumbnail}
                                   alt=""
@@ -124,14 +124,14 @@ export default function RabbitHoleSummary({
                             )}
                             <div className="min-w-0">
                               <h3
-                                className="text-base font-bold text-white"
+                                className="text-base font-bold text-[#1a1520]"
                                 style={{ fontFamily: "var(--font-display)" }}
                               >
                                 {step.title}
                               </h3>
                               {article?.description && (
                                 <p
-                                  className="text-sm text-amber-100/80 mt-1"
+                                  className="text-sm text-[#1a1520]/75 mt-1"
                                   style={{ fontFamily: "var(--font-body)" }}
                                 >
                                   {article.description}
@@ -153,7 +153,7 @@ export default function RabbitHoleSummary({
 
                           {i < narrative.steps.length - 1 && (
                             <p
-                              className="text-sm text-amber-100/70 mt-2 ml-15"
+                              className="text-sm text-[#1a1520]/70 mt-2 ml-15"
                               style={{ fontFamily: "var(--font-body)" }}
                             >
                               {step.segue} &darr;
@@ -170,10 +170,10 @@ export default function RabbitHoleSummary({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="mt-6 pt-6 border-t border-amber-200/15"
+                className="mt-6 pt-6 border-t border-[#1a1520]/10"
               >
                 <p
-                  className="text-sm uppercase tracking-[0.2em] text-amber-300/80 mb-4"
+                  className="text-sm uppercase tracking-[0.2em] text-[#EF3922] font-semibold mb-4"
                   style={{ fontFamily: "var(--font-body)" }}
                 >
                   Read the articles
@@ -185,10 +185,10 @@ export default function RabbitHoleSummary({
                       href={article.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-base text-amber-100/85 hover:text-white transition-colors"
+                      className="flex items-center gap-2 text-base text-[#1a1520]/80 hover:text-[#EF3922] transition-colors"
                       style={{ fontFamily: "var(--font-body)" }}
                     >
-                      <span className="text-amber-300/70">&#x2192;</span>
+                      <span className="text-[#EF3922]">&#x2192;</span>
                       {article.title}
                     </a>
                   ))}

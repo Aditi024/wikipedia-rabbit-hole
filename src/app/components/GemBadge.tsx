@@ -9,37 +9,37 @@ const RARITY_CONFIG: Record<
 > = {
   Common: {
     label: "Common",
-    bg: "bg-gray-500/20",
-    text: "text-gray-300",
-    border: "border-gray-500/30",
+    bg: "bg-gray-500/15",
+    text: "text-gray-600",
+    border: "border-gray-500/40",
     emoji: "~",
   },
   Uncommon: {
     label: "Uncommon",
-    bg: "bg-emerald-500/20",
-    text: "text-emerald-300",
-    border: "border-emerald-500/30",
+    bg: "bg-emerald-500/15",
+    text: "text-emerald-700",
+    border: "border-emerald-500/40",
     emoji: "+",
   },
   Rare: {
     label: "Rare",
-    bg: "bg-blue-500/20",
-    text: "text-blue-300",
-    border: "border-blue-500/30",
+    bg: "bg-blue-500/15",
+    text: "text-blue-700",
+    border: "border-blue-500/40",
     emoji: "*",
   },
   Epic: {
     label: "Epic",
-    bg: "bg-purple-500/20",
-    text: "text-purple-300",
-    border: "border-purple-500/30",
+    bg: "bg-purple-500/15",
+    text: "text-purple-700",
+    border: "border-purple-500/40",
     emoji: "**",
   },
   Legendary: {
     label: "Legendary",
-    bg: "bg-amber-500/20",
-    text: "text-amber-300",
-    border: "border-amber-500/30",
+    bg: "bg-amber-500/15",
+    text: "text-amber-700",
+    border: "border-amber-500/40",
     emoji: "***",
   },
 };
@@ -52,7 +52,7 @@ export default function GemBadge({ rarity }: { rarity: GemRarity }) {
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
       transition={{ type: "spring", stiffness: 500, damping: 20, delay: 0.3 }}
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${config.bg} ${config.text} ${config.border}`}
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${config.bg} ${config.text} ${config.border}`}
     >
       <span>{config.emoji}</span>
       {config.label}

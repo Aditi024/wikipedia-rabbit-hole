@@ -59,6 +59,9 @@ const ArticleNode = forwardRef<HTMLDivElement, ArticleNodeProps>(
       [dragControls, isWiring]
     );
 
+    const floatDuration = 5 + (index % 3) * 1.5;
+    const floatAmplitude = 6 + (index % 2) * 3;
+
     return (
       <motion.div
         ref={ref}
@@ -68,6 +71,7 @@ const ArticleNode = forwardRef<HTMLDivElement, ArticleNodeProps>(
           opacity: 1,
           scale: isSelected ? 1.05 : 1,
           rotate: position.rotation,
+          y: [0, -floatAmplitude, 0],
         }}
         exit={{ opacity: 0, scale: 0, transition: { duration: 0.2 } }}
         transition={{
@@ -75,6 +79,12 @@ const ArticleNode = forwardRef<HTMLDivElement, ArticleNodeProps>(
           stiffness: 260,
           damping: 20,
           delay: index * 0.25,
+          y: {
+            duration: floatDuration,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: index * 0.8,
+          },
         }}
         drag
         dragControls={dragControls}
@@ -83,13 +93,12 @@ const ArticleNode = forwardRef<HTMLDivElement, ArticleNodeProps>(
         onDrag={onDragUpdate}
         onDragEnd={onDragUpdate}
         whileHover={{ scale: 1.04, zIndex: 50 }}
-        className="absolute group float-slow"
+        className="absolute group"
         style={{
           left: `${position.x}%`,
           top: `${position.y}%`,
           transform: `translate(-50%, -50%)`,
           zIndex: isSelected ? 40 : 10 + index,
-          animationDelay: `${index * 1.2}s`,
         }}
       >
         {/* Input port — left side — FILLED circle */}
@@ -103,9 +112,9 @@ const ArticleNode = forwardRef<HTMLDivElement, ArticleNodeProps>(
           <div
             className={`w-3.5 h-3.5 rounded-full transition-all duration-150 ${isWiring ? "scale-[1.7] animate-pulse" : "hover:scale-150"}`}
             style={{
-              backgroundColor: isWiring ? "#fcd34d" : portColor,
+              backgroundColor: isWiring ? "#EF3922" : portColor,
               boxShadow: isWiring
-                ? "0 0 16px rgba(252,211,77,0.8), 0 0 30px rgba(252,211,77,0.3)"
+                ? "0 0 16px rgba(239,57,34,0.8), 0 0 30px rgba(239,57,34,0.3)"
                 : `0 0 6px ${portColor}40`,
             }}
           />
@@ -122,10 +131,10 @@ const ArticleNode = forwardRef<HTMLDivElement, ArticleNodeProps>(
           <div
             className={`w-3.5 h-3.5 rounded-full border-[2.5px] transition-all duration-150 ${isWiring ? "scale-[1.7] animate-pulse" : "hover:scale-150"}`}
             style={{
-              borderColor: isWiring ? "#fcd34d" : portColor,
+              borderColor: isWiring ? "#EF3922" : portColor,
               backgroundColor: "transparent",
               boxShadow: isWiring
-                ? "0 0 16px rgba(252,211,77,0.8), 0 0 30px rgba(252,211,77,0.3)"
+                ? "0 0 16px rgba(239,57,34,0.8), 0 0 30px rgba(239,57,34,0.3)"
                 : `0 0 6px ${portColor}40`,
             }}
           />
@@ -147,8 +156,8 @@ const ArticleNode = forwardRef<HTMLDivElement, ArticleNodeProps>(
             bg-[#1a1520]/95 backdrop-blur-sm
             border-2 transition-all duration-300
             ${isWiring ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"}
-            ${isSelected ? "border-amber-300/40 shadow-[0_0_30px_rgba(220,180,100,0.15)]" : "border-amber-200/10 hover:border-amber-200/25"}
-            ${isWiring ? "border-purple-400/40 shadow-[0_0_20px_rgba(167,139,250,0.2)]" : ""}
+            ${isSelected ? "border-[#EF3922]/40 shadow-[0_0_30px_rgba(239,57,34,0.15)]" : "border-white/20 hover:border-white/40"}
+            ${isWiring ? "border-[#EF3922]/40 shadow-[0_0_20px_rgba(239,57,34,0.2)]" : ""}
           `}
           style={
             isSelected && rarityColor
@@ -166,7 +175,7 @@ const ArticleNode = forwardRef<HTMLDivElement, ArticleNodeProps>(
               />
             </div>
           ) : (
-            <div className="w-full h-28 bg-gradient-to-br from-amber-900/20 to-rose-900/20 flex items-center justify-center">
+            <div className="w-full h-28 bg-gradient-to-br from-[#F184EB]/15 to-[#EF3922]/10 flex items-center justify-center">
               <span className="text-3xl opacity-30">?</span>
             </div>
           )}
@@ -180,7 +189,7 @@ const ArticleNode = forwardRef<HTMLDivElement, ArticleNodeProps>(
             </h3>
             {article.description && (
               <p
-                className="text-sm text-amber-100/70 mt-1 line-clamp-1"
+                className="text-sm text-white/60 mt-1 line-clamp-1"
                 style={{ fontFamily: "var(--font-body)" }}
               >
                 {article.description}
@@ -206,7 +215,7 @@ const ArticleNode = forwardRef<HTMLDivElement, ArticleNodeProps>(
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: index * 0.25 + 0.15, type: "spring", stiffness: 400 }}
-          className="absolute -top-2 -left-2 w-6 h-6 rounded-full bg-amber-300 text-amber-950 text-xs font-bold flex items-center justify-center shadow-lg pointer-events-none"
+          className="absolute -top-2 -left-2 w-6 h-6 rounded-full bg-[#EF3922] text-white text-xs font-bold flex items-center justify-center shadow-lg pointer-events-none"
         >
           {index + 1}
         </motion.div>
@@ -219,7 +228,7 @@ const ArticleNode = forwardRef<HTMLDivElement, ArticleNodeProps>(
             e.stopPropagation();
             onRemove();
           }}
-          className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-[#1a1520] border border-amber-200/20 text-amber-200/50 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-500/80 hover:border-red-400 hover:text-white transition-all duration-200 z-20"
+          className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white/80 border border-[#1a1520]/10 text-[#1a1520]/50 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-500/80 hover:border-red-400 hover:text-white transition-all duration-200 z-20"
         >
           &times;
         </motion.button>

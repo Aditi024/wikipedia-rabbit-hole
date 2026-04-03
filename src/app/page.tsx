@@ -47,7 +47,7 @@ function LoadingText() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
-        className="text-amber-100/80 text-lg"
+        className="text-[#1a1520]/90 text-lg font-medium"
         style={{ fontFamily: "var(--font-body)" }}
       >
         {LOADING_MESSAGES[index]}
@@ -265,12 +265,12 @@ export default function Home() {
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 0.2, scale: 1 }}
+              animate={{ opacity: 0.15, scale: 1 }}
               transition={{ delay: 0.1, duration: 1.2 }}
               className="absolute w-[600px] h-[600px] rounded-full"
               style={{
                 background:
-                  "radial-gradient(circle, rgba(220,160,80,0.25) 0%, rgba(200,100,140,0.1) 40%, transparent 70%)",
+                  "radial-gradient(circle, rgba(239,57,34,0.15) 0%, rgba(241,132,235,0.1) 40%, transparent 70%)",
                 filter: "blur(80px)",
               }}
             />
@@ -281,13 +281,13 @@ export default function Home() {
               className="relative z-10 leading-[0.9]"
             >
               <span
-                className="block text-8xl md:text-[11rem] font-extrabold text-amber-50 tracking-tight"
+                className="block text-8xl md:text-[11rem] font-extrabold text-[#EF3922] tracking-tight"
                 style={{ fontFamily: "var(--font-display)" }}
               >
                 rabbit
               </span>
               <span
-                className="block text-8xl md:text-[11rem] font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-rose-300 to-purple-300"
+                className="block text-8xl md:text-[11rem] font-extrabold tracking-tight text-[#EF3922]"
                 style={{ fontFamily: "var(--font-display)" }}
               >
                 hole.
@@ -297,7 +297,7 @@ export default function Home() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="text-xl text-amber-100/80 max-w-sm relative z-10"
+              className="text-xl text-[#1a1520]/85 max-w-sm relative z-10 font-medium"
               style={{ fontFamily: "var(--font-body)" }}
             >
               Wander through Wikipedia.
@@ -321,7 +321,7 @@ export default function Home() {
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ repeat: Infinity, duration: 2.5, ease: "linear" }}
-              className="w-16 h-16 rounded-full border-2 border-amber-900/30 border-t-amber-300 border-r-rose-300"
+              className="w-16 h-16 rounded-full border-2 border-[#EF3922]/20 border-t-[#EF3922] border-r-[#F184EB]"
             />
             <LoadingText />
             <motion.div
@@ -333,7 +333,7 @@ export default function Home() {
               {[0, 1, 2].map((i) => (
                 <motion.div
                   key={i}
-                  className="w-2 h-2 rounded-full bg-amber-400/40"
+                  className="w-2 h-2 rounded-full bg-[#EF3922]/40"
                   animate={{
                     opacity: [0.3, 1, 0.3],
                     scale: [1, 1.4, 1],
@@ -370,8 +370,8 @@ export default function Home() {
                   disabled={saved}
                   className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
                     saved
-                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                      : "bg-amber-100/8 text-amber-100 border border-amber-200/20 hover:bg-amber-100/15 hover:text-white"
+                      ? "bg-emerald-500/20 text-emerald-700 border border-emerald-500/30"
+                      : "bg-white/40 text-[#1a1520] border border-[#EF3922]/20 hover:bg-white/60 hover:border-[#EF3922]/40"
                   }`}
                   style={{ fontFamily: "var(--font-body)" }}
                 >

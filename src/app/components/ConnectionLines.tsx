@@ -25,21 +25,13 @@ export default function ConnectionLines({
       className="absolute inset-0 w-full h-full pointer-events-none"
       style={{ zIndex: 1 }}
     >
-      <defs>
-        <linearGradient id="nodeLineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="rgba(252,211,77,0.4)" />
-          <stop offset="50%" stopColor="rgba(251,191,146,0.25)" />
-          <stop offset="100%" stopColor="rgba(252,211,77,0.4)" />
-        </linearGradient>
-      </defs>
-
       {paths.map((conn, i) => (
         <g key={conn.id}>
-          {/* Visible line */}
           <motion.path
             d={conn.path}
-            stroke="url(#nodeLineGrad)"
-            strokeWidth={1.5}
+            stroke="#1a1520"
+            strokeWidth={2}
+            strokeOpacity={0.3}
             fill="none"
             strokeLinecap="round"
             initial={{ pathLength: 0, opacity: 0 }}
@@ -49,7 +41,6 @@ export default function ConnectionLines({
               opacity: { delay: i * 0.3 + 0.4, duration: 0.3 },
             }}
           />
-          {/* Invisible thick hit area for clicking */}
           <path
             d={conn.path}
             stroke="transparent"
@@ -61,14 +52,13 @@ export default function ConnectionLines({
           >
             <title>Click to remove connection</title>
           </path>
-          {/* Hover highlight */}
           <path
             d={conn.path}
             stroke="rgba(239,68,68,0)"
-            strokeWidth={2.5}
+            strokeWidth={3}
             fill="none"
             strokeLinecap="round"
-            className="pointer-events-none transition-all duration-200 [g:hover>&]:stroke-[rgba(239,68,68,0.5)]"
+            className="pointer-events-none transition-all duration-200 [g:hover>&]:stroke-[rgba(239,68,68,0.6)]"
           />
         </g>
       ))}

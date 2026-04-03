@@ -35,12 +35,12 @@ export default function DetailPanel({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 100 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-[#14111e]/98 backdrop-blur-lg border-l border-amber-200/15 z-50 overflow-y-auto"
+            className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white/95 backdrop-blur-lg border-l border-[#EF3922]/10 z-50 overflow-y-auto"
           >
             <div className="p-8">
               <button
                 onClick={onClose}
-                className="absolute top-5 right-5 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/80 hover:text-white transition-colors text-lg"
+                className="absolute top-5 right-5 w-9 h-9 rounded-full bg-[#1a1520]/5 hover:bg-[#1a1520]/10 flex items-center justify-center text-[#1a1520]/60 hover:text-[#1a1520] transition-colors text-lg"
               >
                 &times;
               </button>
@@ -77,7 +77,7 @@ export default function DetailPanel({
                 )}
 
                 <h2
-                  className="text-2xl md:text-3xl font-bold text-white mb-3 leading-tight"
+                  className="text-2xl md:text-3xl font-bold text-[#1a1520] mb-3 leading-tight"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   {article.title}
@@ -85,7 +85,7 @@ export default function DetailPanel({
 
                 {article.description && (
                   <p
-                    className="text-base text-amber-100/80 mb-5"
+                    className="text-base text-[#1a1520]/75 mb-5"
                     style={{ fontFamily: "var(--font-body)" }}
                   >
                     {article.description}
@@ -93,7 +93,7 @@ export default function DetailPanel({
                 )}
 
                 <p
-                  className="text-base text-amber-50/90 leading-[1.75] mb-8"
+                  className="text-base text-[#1a1520]/80 leading-[1.75] mb-8"
                   style={{ fontFamily: "var(--font-body)" }}
                 >
                   {article.extract}
@@ -103,7 +103,7 @@ export default function DetailPanel({
                   href={article.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-amber-200/10 text-amber-100 border border-amber-300/25 font-medium text-sm hover:bg-amber-200/20 hover:text-white transition-colors"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#EF3922] text-white font-medium text-sm hover:bg-[#d42f1a] transition-colors"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   Read on Wikipedia &#x2192;
