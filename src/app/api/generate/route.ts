@@ -22,8 +22,20 @@ function toArticle(summary: ArticleSummary): RabbitHoleArticle {
   };
 }
 
-const CHAIN_LENGTH = 5;
+const MIN_CHAIN = 3;
+const MAX_CHAIN = 5;
 const MAX_RETRIES = 3;
+const QUALITY_THRESHOLD = 80;
+
+function articleQuality(summary: ArticleSummary): number {
+  let score = 0;
+  if (summary.extract && summary.extract.length > 100) score += 40;
+  else if (summary.extract && summary.extract.length > 50) score += 20;
+  if (summary.thumbnail || summary.originalimage) score += 30;
+  if (summary.description && summary.description.length > 10) score += 20;
+  if (summary.extract && summary.extract.length > 200) score += 10;
+  return score;
+}
 
 export async function GET() {
   try {
@@ -49,7 +61,7 @@ export async function GET() {
 
     let currentTitle = startArticle.title;
 
-    for (let i = 1; i < CHAIN_LENGTH; i++) {
+    for (let i = 1; i < MAX_CHAIN; i++) {
       const links = await getArticleLinks(currentTitle);
       const candidates = pickInterestingLinks(links, 20).filter(
         (l) => !seenTitles.has(l)
@@ -57,33 +69,30 @@ export async function GET() {
 
       if (candidates.length === 0) break;
 
-      let found = false;
-      for (const candidate of candidates.slice(0, 5)) {
+      let bestSummary: ArticleSummary | null = null;
+      let bestQuality = 0;
+
+      for (const candidate of candidates.slice(0, 6)) {
         try {
           const summary = await getArticleSummary(candidate);
-          if (summary.extract && summary.extract.length > 30) {
-            chain.push(toArticle(summary));
-            seenTitles.add(summary.title);
-            currentTitle = summary.title;
-            found = true;
-            break;
+          const q = articleQuality(summary);
+          if (q > bestQuality) {
+            bestSummary = summary;
+            bestQuality = q;
           }
+          if (q >= QUALITY_THRESHOLD) break;
         } catch {
           continue;
         }
       }
 
-      if (!found) {
-        const fallback = candidates[0];
-        try {
-          const summary = await getArticleSummary(fallback);
-          chain.push(toArticle(summary));
-          seenTitles.add(summary.title);
-          currentTitle = summary.title;
-        } catch {
-          break;
-        }
-      }
+      if (!bestSummary) break;
+
+      if (i >= MIN_CHAIN && bestQuality < QUALITY_THRESHOLD) break;
+
+      chain.push(toArticle(bestSummary));
+      seenTitles.add(bestSummary.title);
+      currentTitle = bestSummary.title;
     }
 
     const linkContexts = await Promise.all(
