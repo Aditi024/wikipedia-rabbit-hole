@@ -25,15 +25,29 @@ function toArticle(summary: ArticleSummary): RabbitHoleArticle {
 const MIN_CHAIN = 3;
 const MAX_CHAIN = 5;
 const MAX_RETRIES = 3;
-const QUALITY_THRESHOLD = 80;
+
+/**
+ * Quality bar rises with each position in the chain.
+ * Position 1-2: always added (building the core).
+ * Position 3 (4th article): needs 70+ to continue.
+ * Position 4 (5th article): needs 90+ — genuinely excellent.
+ */
+const QUALITY_GATES: Record<number, number> = { 3: 70, 4: 90 };
 
 function articleQuality(summary: ArticleSummary): number {
   let score = 0;
-  if (summary.extract && summary.extract.length > 100) score += 40;
-  else if (summary.extract && summary.extract.length > 50) score += 20;
-  if (summary.thumbnail || summary.originalimage) score += 30;
-  if (summary.description && summary.description.length > 10) score += 20;
-  if (summary.extract && summary.extract.length > 200) score += 10;
+
+  const len = summary.extract?.length ?? 0;
+  if (len > 300) score += 35;
+  else if (len > 150) score += 25;
+  else if (len > 50) score += 10;
+
+  if (summary.thumbnail || summary.originalimage) score += 25;
+
+  if (summary.description && summary.description.length > 10) score += 15;
+
+  if (summary.thumbnail && len > 200 && summary.description) score += 25;
+
   return score;
 }
 
@@ -80,7 +94,7 @@ export async function GET() {
             bestSummary = summary;
             bestQuality = q;
           }
-          if (q >= QUALITY_THRESHOLD) break;
+          if (q >= 90) break;
         } catch {
           continue;
         }
@@ -88,7 +102,8 @@ export async function GET() {
 
       if (!bestSummary) break;
 
-      if (i >= MIN_CHAIN && bestQuality < QUALITY_THRESHOLD) break;
+      const gate = QUALITY_GATES[i];
+      if (gate && bestQuality < gate) break;
 
       chain.push(toArticle(bestSummary));
       seenTitles.add(bestSummary.title);
