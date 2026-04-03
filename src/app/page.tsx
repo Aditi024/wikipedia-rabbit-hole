@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RabbitHoleArticle, ScoreInfo, Connection } from "@/lib/types";
 import { generateNodePositions, NodePosition } from "@/lib/layout";
@@ -11,41 +11,9 @@ import { encodeRabbitHole } from "@/lib/share";
 import NodeCanvas from "@/app/components/NodeCanvas";
 import ExploreButton from "@/app/components/ExploreButton";
 import ScoreDisplay from "@/app/components/ScoreDisplay";
+import LoadingTunnel from "@/app/components/LoadingTunnel";
 
 type AppState = "landing" | "loading" | "exploring";
-
-const LOADING_MESSAGES = [
-  "Tunneling through Wikipedia...",
-  "Following a curious link...",
-  "Discovering something obscure...",
-  "Connecting the dots...",
-  "Going deeper...",
-];
-
-function LoadingText() {
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIndex((i) => (i + 1) % LOADING_MESSAGES.length);
-    }, 2000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <AnimatePresence mode="wait">
-      <motion.p
-        key={index}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        className="text-text-primary text-lg font-medium font-body"
-      >
-        {LOADING_MESSAGES[index]}
-      </motion.p>
-    </AnimatePresence>
-  );
-}
 
 export default function Home() {
   const [state, setState] = useState<AppState>("landing");
@@ -255,44 +223,7 @@ export default function Home() {
           </motion.div>
         )}
 
-        {state === "loading" && (
-          <motion.div
-            key="loading"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex flex-col items-center gap-6"
-          >
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 2.5, ease: "linear" }}
-              className="w-16 h-16 rounded-full border-2 border-brand-light border-t-brand border-r-grid"
-            />
-            <LoadingText />
-            <motion.div
-              className="flex gap-2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-            >
-              {[0, 1, 2].map((i) => (
-                <motion.div
-                  key={i}
-                  className="w-2 h-2 rounded-full bg-brand-medium"
-                  animate={{
-                    opacity: [0.3, 1, 0.3],
-                    scale: [1, 1.4, 1],
-                  }}
-                  transition={{
-                    repeat: Infinity,
-                    duration: 1.2,
-                    delay: i * 0.2,
-                  }}
-                />
-              ))}
-            </motion.div>
-          </motion.div>
-        )}
+        {state === "loading" && <LoadingTunnel key="loading" />}
 
         {state === "exploring" && (
           <motion.div
