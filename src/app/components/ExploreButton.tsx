@@ -75,11 +75,20 @@ export default function ExploreButton({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.5, type: "spring", stiffness: 120 }}
-      whileHover={{ scale: 1.04 }}
+      whileHover={{ scale: 1.06, y: -2 }}
       whileTap={{ scale: 0.96 }}
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
-      className="relative group px-10 py-4 rounded-full font-bold text-lg tracking-wide disabled:opacity-50 disabled:cursor-not-allowed overflow-visible font-display"
+      className="relative group px-12 py-5 rounded-full font-bold text-lg tracking-wide disabled:opacity-50 disabled:cursor-not-allowed overflow-visible font-display"
+      style={{
+        background: hovered
+          ? "rgba(239, 57, 34, 0.95)"
+          : "rgba(255, 255, 255, 0.85)",
+        boxShadow: hovered
+          ? "0 8px 30px rgba(239, 57, 34, 0.3), 0 2px 8px rgba(239, 57, 34, 0.15)"
+          : "0 4px 20px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04)",
+        transition: "background 0.35s ease, box-shadow 0.35s ease",
+      }}
     >
       {sketch && sketch2 && (
         <svg
@@ -96,17 +105,17 @@ export default function ExploreButton({
         >
           <path
             d={sketch.d}
-            stroke={hovered ? "rgba(239, 57, 34, 0.95)" : "rgba(239, 57, 34, 0.8)"}
-            strokeWidth={hovered ? 2 : 1.6}
-            fill={hovered ? "rgba(239, 57, 34, 0.92)" : "none"}
+            stroke={hovered ? "rgba(239, 57, 34, 0.5)" : "rgba(239, 57, 34, 0.55)"}
+            strokeWidth={hovered ? 1.8 : 1.5}
+            fill="none"
             strokeLinejoin="round"
             strokeLinecap="round"
             className="transition-all duration-300"
           />
           <path
             d={sketch2.d}
-            stroke={hovered ? "rgba(239, 57, 34, 0.35)" : "rgba(239, 57, 34, 0.2)"}
-            strokeWidth={0.8}
+            stroke={hovered ? "rgba(239, 57, 34, 0.2)" : "rgba(239, 57, 34, 0.15)"}
+            strokeWidth={0.7}
             fill="none"
             strokeLinejoin="round"
             strokeLinecap="round"
@@ -115,30 +124,29 @@ export default function ExploreButton({
         </svg>
       )}
       <span
-        className={`relative z-10 transition-colors duration-300 ${hovered ? "text-background" : "text-brand"}`}
+        className={`relative z-10 transition-colors duration-300 ${hovered ? "text-white" : "text-brand"}`}
       >
         {loading ? (
           <span className="flex items-center gap-3">
             <motion.span
               animate={{ rotate: 360 }}
               transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-              className="inline-block w-5 h-5 border-2 border-brand-light border-t-white rounded-full"
+              className="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
             />
             Tunneling...
           </span>
         ) : (
-          <span className="flex items-center gap-3">
+          <span className="flex items-center gap-2">
             Start exploring
             <motion.span
-              animate={{ x: [0, 5, 0] }}
+              animate={{ x: [0, 4, 0] }}
               transition={{
                 repeat: Infinity,
                 duration: 1.5,
                 ease: "easeInOut",
               }}
-              className="text-xl"
             >
-              &#x2192;
+              &rarr;
             </motion.span>
           </span>
         )}
