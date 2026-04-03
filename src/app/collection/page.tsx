@@ -10,12 +10,43 @@ import {
   ExplorerStats,
 } from "@/lib/storage";
 import { DEFAULT_STATS } from "@/lib/config";
+import { encodeRabbitHole } from "@/lib/share";
 import Link from "next/link";
+
+function StatCard({
+  value,
+  label,
+  accent,
+  delay,
+}: {
+  value: string | number;
+  label: string;
+  accent?: string;
+  delay: number;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay }}
+      className="bg-surface-frosted backdrop-blur-sm border border-brand-subtle rounded-2xl p-6 text-center hover:border-brand-light transition-all"
+    >
+      <p className="text-3xl font-bold text-brand font-display">{value}</p>
+      <p className="text-sm text-text-muted font-medium mt-2 font-body">
+        {label}
+        {accent && (
+          <span className="block text-brand text-xs mt-0.5">{accent}</span>
+        )}
+      </p>
+    </motion.div>
+  );
+}
 
 export default function CollectionPage() {
   const [holes, setHoles] = useState<SavedRabbitHole[]>([]);
   const [stats, setStats] = useState<ExplorerStats>({ ...DEFAULT_STATS });
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     setHoles(getSavedHoles());
@@ -27,60 +58,72 @@ export default function CollectionPage() {
     setHoles(getSavedHoles());
   };
 
+  const handleShare = async (hole: SavedRabbitHole) => {
+    const encoded = encodeRabbitHole(hole.articles.map((a) => a.title));
+    const url = `${window.location.origin}/share/${encoded}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedId(hole.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      window.prompt("Copy this link:", url);
+    }
+  };
+
+  const hasHoles = holes.length > 0;
+
   return (
-    <div className="max-w-3xl mx-auto px-6 py-8">
+    <div className="max-w-2xl mx-auto px-6 py-12">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
+        className="mb-10"
       >
-        <h1 className="text-4xl font-bold text-brand mb-3 font-display">
-          Your Collection
+        <h1 className="text-5xl font-extrabold text-brand leading-tight font-display">
+          Your
+          <br />
+          Collection
         </h1>
-        <p className="text-lg text-text-secondary mb-8 font-body">
-          Rabbit holes you&apos;ve saved along the way.
+        <p className="text-base text-text-secondary mt-3 font-body">
+          {hasHoles
+            ? `${holes.length} rabbit hole${holes.length === 1 ? "" : "s"} saved so far.`
+            : "Rabbit holes you save will appear here."}
         </p>
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="grid grid-cols-3 gap-4 mb-10"
-      >
-        <div className="bg-surface-glass border border-brand-subtle rounded-2xl p-5 text-center">
-          <p className="text-2xl font-bold text-brand font-display">{stats.totalExplored}</p>
-          <p className="text-sm text-text-secondary font-medium mt-1 font-body">Holes Explored</p>
-        </div>
-        <div className="bg-surface-glass border border-brand-subtle rounded-2xl p-5 text-center">
-          <p className="text-2xl font-bold text-brand font-display">{stats.totalGems}</p>
-          <p className="text-sm text-text-secondary font-medium mt-1 font-body">Total Gems</p>
-        </div>
-        <div className="bg-surface-glass border border-brand-subtle rounded-2xl p-5 text-center">
-          <p className="text-sm font-bold text-foreground truncate font-display">
-            {stats.rarestFind?.title || "---"}
-          </p>
-          <p className="text-sm text-text-secondary font-medium mt-1 font-body">
-            Rarest Find
-            {stats.rarestFind && (
-              <span className="text-brand ml-1">
-                ({stats.rarestFind.rarity})
-              </span>
-            )}
-          </p>
-        </div>
-      </motion.div>
+      <div className="grid grid-cols-3 gap-3 mb-12">
+        <StatCard
+          value={stats.totalExplored}
+          label="Explored"
+          delay={0.1}
+        />
+        <StatCard
+          value={stats.totalGems}
+          label="Gems Found"
+          delay={0.15}
+        />
+        <StatCard
+          value={stats.rarestFind?.title || "---"}
+          label="Rarest Find"
+          accent={stats.rarestFind?.rarity}
+          delay={0.2}
+        />
+      </div>
 
-      {holes.length === 0 ? (
+      {!hasHoles ? (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="text-center py-20"
+          transition={{ delay: 0.25 }}
+          className="flex flex-col items-center py-16 gap-5"
         >
-          <p className="text-text-secondary text-lg mb-4 font-body">No saved rabbit holes yet.</p>
+          <div className="text-6xl select-none">🕳️</div>
+          <p className="text-text-muted text-base font-body">
+            Nothing here yet. Go explore.
+          </p>
           <Link
             href="/"
-            className="inline-flex px-6 py-3 rounded-full bg-brand text-white font-semibold text-sm hover:bg-brand-hover transition-colors font-display"
+            className="px-8 py-3 rounded-full bg-brand text-white font-semibold text-sm hover:bg-brand-hover transition-colors font-display"
           >
             Start Exploring
           </Link>
@@ -88,107 +131,136 @@ export default function CollectionPage() {
       ) : (
         <div className="space-y-3">
           <AnimatePresence>
-            {holes.map((hole, i) => (
-              <motion.div
-                key={hole.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: -100 }}
-                transition={{ delay: i * 0.05 }}
-                className="bg-surface-glass border border-brand-subtle rounded-2xl overflow-hidden"
-              >
-                <button
-                  onClick={() =>
-                    setExpanded(expanded === hole.id ? null : hole.id)
-                  }
-                  className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-surface-glass/60 transition-colors"
-                >
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="flex -space-x-2">
-                      {hole.articles.slice(0, 3).map((a) => (
-                        <div
-                          key={a.title}
-                          className="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-grid/20"
-                        >
-                          {a.thumbnail && (
-                            <img
-                              src={a.thumbnail}
-                              alt=""
-                              className="w-full h-full object-cover"
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {hole.articles[0]?.title} &rarr;{" "}
-                        {hole.articles[hole.articles.length - 1]?.title}
-                      </p>
-                      <p className="text-sm text-text-muted font-medium font-body">
-                        {new Date(hole.createdAt).toLocaleDateString()} &middot;{" "}
-                        {hole.articles.length} articles
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-bold text-brand">
-                      {hole.gemScore} pts
-                    </span>
-                    <span className="text-text-faint text-xs">
-                      {expanded === hole.id ? "v" : ">"}
-                    </span>
-                  </div>
-                </button>
+            {holes.map((hole, i) => {
+              const first = hole.articles[0];
+              const last = hole.articles[hole.articles.length - 1];
+              const isExpanded = expanded === hole.id;
 
-                <AnimatePresence>
-                  {expanded === hole.id && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="px-5 pb-4 space-y-2 border-t border-foreground/5 pt-3">
-                        {hole.articles.map((article, j) => (
+              return (
+                <motion.div
+                  key={hole.id}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -80 }}
+                  transition={{ delay: 0.05 + i * 0.04 }}
+                  className="bg-surface-frosted backdrop-blur-sm border border-brand-subtle rounded-2xl overflow-hidden hover:border-brand-light transition-all"
+                >
+                  <button
+                    onClick={() =>
+                      setExpanded(isExpanded ? null : hole.id)
+                    }
+                    className="w-full px-5 py-4 flex items-center justify-between text-left"
+                  >
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className="flex -space-x-2">
+                        {hole.articles.slice(0, 4).map((a) => (
                           <div
-                            key={article.title}
-                            className="flex items-center gap-3"
+                            key={a.title}
+                            className="w-9 h-9 rounded-full border-2 border-white overflow-hidden bg-grid/20 shadow-sm"
                           >
-                            <span className="text-xs text-text-muted font-medium w-4">
-                              {j + 1}.
-                            </span>
-                            <div className="w-6 h-6 rounded overflow-hidden bg-grid/15 shrink-0">
-                              {article.thumbnail && (
-                                <img
-                                  src={article.thumbnail}
-                                  alt=""
-                                  className="w-full h-full object-cover"
-                                />
-                              )}
-                            </div>
-                            <a
-                              href={article.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-sm text-text-secondary hover:text-brand transition-colors truncate"
-                            >
-                              {article.title}
-                            </a>
+                            {a.thumbnail ? (
+                              <img
+                                src={a.thumbnail}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-brand-subtle" />
+                            )}
                           </div>
                         ))}
-                        <button
-                          onClick={() => handleDelete(hole.id)}
-                          className="mt-2 text-xs text-red-400/60 hover:text-red-500 transition-colors"
-                        >
-                          Remove
-                        </button>
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            ))}
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate font-body">
+                          {first?.title}
+                          <span className="text-text-muted mx-1.5">&rarr;</span>
+                          {last?.title}
+                        </p>
+                        <p className="text-xs text-text-muted mt-0.5 font-body">
+                          {new Date(hole.createdAt).toLocaleDateString(
+                            "en-US",
+                            { month: "short", day: "numeric" }
+                          )}{" "}
+                          &middot; {hole.articles.length} articles
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-sm font-bold text-brand font-display">
+                        {hole.gemScore}
+                      </span>
+                      <motion.span
+                        animate={{ rotate: isExpanded ? 90 : 0 }}
+                        className="text-text-faint text-xs"
+                      >
+                        &#x25B6;
+                      </motion.span>
+                    </div>
+                  </button>
+
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-5 pb-5 space-y-2.5 border-t border-foreground/5 pt-4">
+                          {hole.articles.map((article, j) => (
+                            <div
+                              key={article.title}
+                              className="flex items-center gap-3"
+                            >
+                              <span className="text-xs text-text-muted font-bold w-5 text-right font-display">
+                                {j + 1}
+                              </span>
+                              <div className="w-7 h-7 rounded-lg overflow-hidden bg-grid/15 shrink-0">
+                                {article.thumbnail ? (
+                                  <img
+                                    src={article.thumbnail}
+                                    alt=""
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-brand-subtle" />
+                                )}
+                              </div>
+                              <a
+                                href={article.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm text-text-secondary hover:text-brand transition-colors truncate font-body"
+                              >
+                                {article.title}
+                              </a>
+                            </div>
+                          ))}
+
+                          <div className="flex items-center gap-3 pt-2 border-t border-foreground/5">
+                            <button
+                              onClick={() => handleShare(hole)}
+                              className="text-xs font-medium text-text-muted hover:text-brand transition-colors font-body"
+                            >
+                              {copiedId === hole.id
+                                ? "Link copied!"
+                                : "Share"}
+                            </button>
+                            <span className="text-foreground/10">|</span>
+                            <button
+                              onClick={() => handleDelete(hole.id)}
+                              className="text-xs font-medium text-text-muted hover:text-red-500 transition-colors font-body"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              );
+            })}
           </AnimatePresence>
         </div>
       )}
