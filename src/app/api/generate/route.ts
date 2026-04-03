@@ -3,6 +3,7 @@ import {
   getRandomArticle,
   getArticleSummary,
   getArticleLinks,
+  getLinkContext,
   pickInterestingLinks,
   ArticleSummary,
 } from "@/lib/wikipedia";
@@ -85,7 +86,13 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json({ articles: chain });
+    const linkContexts = await Promise.all(
+      chain.slice(0, -1).map((article, i) =>
+        getLinkContext(article.title, chain[i + 1].title).catch(() => null)
+      )
+    );
+
+    return NextResponse.json({ articles: chain, linkContexts });
   } catch (error) {
     console.error("Generation error:", error);
     return NextResponse.json(

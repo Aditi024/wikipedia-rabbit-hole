@@ -106,6 +106,82 @@ export async function getPageViews(title: string): Promise<number> {
   }
 }
 
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<sup[^>]*>[\s\S]*?<\/sup>/gi, "")
+    .replace(/<[^>]+>/g, "")
+    .replace(/\[\d+\]/g, "")
+    .replace(/&#\d+;/g, "")
+    .replace(/&[a-z]+;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function hasLinkTo(html: string, toTitle: string): boolean {
+  const toEncoded = toTitle.replace(/ /g, "_");
+  return (
+    html.includes(`/wiki/${toEncoded}`) ||
+    html.includes(`/wiki/${encodeURIComponent(toEncoded)}`) ||
+    new RegExp(`title="${escapeRegex(toTitle)}"`, "i").test(html)
+  );
+}
+
+/**
+ * Fetches the full article HTML of `fromTitle` and extracts the text block
+ * that contains the hyperlink to `toTitle`. Searches paragraphs first
+ * (best context), then list items, then table rows.
+ */
+export async function getLinkContext(
+  fromTitle: string,
+  toTitle: string
+): Promise<string | null> {
+  const params = new URLSearchParams({
+    action: "parse",
+    page: fromTitle,
+    prop: "text",
+    format: "json",
+    origin: "*",
+  });
+
+  try {
+    const res = await fetch(
+      `https://en.wikipedia.org/w/api.php?${params.toString()}`,
+      { headers }
+    );
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const html: string | undefined = data.parse?.text?.["*"];
+    if (!html) return null;
+
+    const selectors: [RegExp, number][] = [
+      [/<p[^>]*>[\s\S]*?<\/p>/gi, 30],
+      [/<li[^>]*>[\s\S]*?<\/li>/gi, 25],
+      [/<tr[^>]*>[\s\S]*?<\/tr>/gi, 15],
+    ];
+
+    for (const [pattern, minLen] of selectors) {
+      const matches = html.match(pattern) || [];
+      for (const block of matches) {
+        if (hasLinkTo(block, toTitle)) {
+          const text = stripHtml(block);
+          if (text.length > minLen) {
+            return text.length > 400 ? text.slice(0, 397) + "..." : text;
+          }
+        }
+      }
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 const BORING_PATTERNS = [
   /^List of /,
   /^Index of /,

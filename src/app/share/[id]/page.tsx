@@ -50,10 +50,11 @@ export default function SharePage({
         }
 
         const chain: RabbitHoleArticle[] = data.articles;
+        const linkContexts: (string | null)[] = data.linkContexts || [];
         setArticles(chain);
         setPositions(generateNodePositions(chain.length));
         setConnections(buildDefaultConnections(chain.length));
-        setNarrative(generateNarrative(chain));
+        setNarrative(generateNarrative(chain, linkContexts));
         setState("ready");
 
         try {

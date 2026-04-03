@@ -72,9 +72,10 @@ export default function Home() {
       }
 
       const chain: RabbitHoleArticle[] = genData.articles;
+      const linkContexts: (string | null)[] = genData.linkContexts || [];
       const nodePositions = generateNodePositions(chain.length);
       const defaultConns = buildDefaultConnections(chain.length);
-      const holeNarrative = generateNarrative(chain);
+      const holeNarrative = generateNarrative(chain, linkContexts);
 
       setArticles(chain);
       setPositions(nodePositions);

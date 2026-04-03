@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getArticleSummary, ArticleSummary } from "@/lib/wikipedia";
+import { getArticleSummary, getLinkContext, ArticleSummary } from "@/lib/wikipedia";
 import type { RabbitHoleArticle } from "@/lib/types";
 
 function toArticle(summary: ArticleSummary): RabbitHoleArticle {
@@ -40,7 +40,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ articles });
+    const linkContexts = await Promise.all(
+      articles.slice(0, -1).map((article, i) =>
+        getLinkContext(article.title, articles[i + 1].title).catch(() => null)
+      )
+    );
+
+    return NextResponse.json({ articles, linkContexts });
   } catch (error) {
     console.error("Articles fetch error:", error);
     return NextResponse.json(
