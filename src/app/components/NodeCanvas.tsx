@@ -13,6 +13,7 @@ import ConnectionLines from "./ConnectionLines";
 import DetailPanel from "./DetailPanel";
 import NarrativeBanner from "./NarrativeBanner";
 import RabbitHoleSummary from "./RabbitHoleSummary";
+import CanvasHints from "./CanvasHints";
 
 interface NodeCanvasProps {
   articles: RabbitHoleArticle[];
@@ -141,6 +142,8 @@ export default function NodeCanvas({
             onClick={() => setShowSummary(true)}
           />
         )}
+
+        <CanvasHints />
       </div>
 
       <DetailPanel

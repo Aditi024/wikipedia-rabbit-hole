@@ -12,15 +12,26 @@ const MESSAGES = [
 ];
 
 const RING_COUNT = 6;
+const SLOW_THRESHOLD_MS = 8000;
 
-export default function LoadingTunnel() {
+interface LoadingTunnelProps {
+  onCancel?: () => void;
+}
+
+export default function LoadingTunnel({ onCancel }: LoadingTunnelProps) {
   const [msgIndex, setMsgIndex] = useState(0);
+  const [showCancel, setShowCancel] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setMsgIndex((i) => (i + 1) % MESSAGES.length);
     }, 2200);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowCancel(true), SLOW_THRESHOLD_MS);
+    return () => clearTimeout(timer);
   }, []);
 
   return (
@@ -72,18 +83,34 @@ export default function LoadingTunnel() {
         />
       </div>
 
-      <div className="relative h-7 flex items-center justify-center">
-        <AnimatePresence mode="wait">
-          <motion.p
-            key={msgIndex}
-            initial={{ opacity: 0, y: 10, filter: "blur(4px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            exit={{ opacity: 0, y: -10, filter: "blur(4px)" }}
-            transition={{ duration: 0.4 }}
-            className="text-text-primary text-base font-medium font-body absolute whitespace-nowrap"
-          >
-            {MESSAGES[msgIndex]}
-          </motion.p>
+      <div className="flex flex-col items-center gap-4">
+        <div className="relative h-7 flex items-center justify-center">
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={msgIndex}
+              initial={{ opacity: 0, y: 10, filter: "blur(4px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, y: -10, filter: "blur(4px)" }}
+              transition={{ duration: 0.4 }}
+              className="text-text-primary text-base font-medium font-body absolute whitespace-nowrap"
+            >
+              {MESSAGES[msgIndex]}
+            </motion.p>
+          </AnimatePresence>
+        </div>
+
+        <AnimatePresence>
+          {showCancel && onCancel && (
+            <motion.button
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              onClick={onCancel}
+              className="text-sm text-text-muted hover:text-brand transition-colors font-body mt-2"
+            >
+              Taking too long? Go back
+            </motion.button>
+          )}
         </AnimatePresence>
       </div>
     </motion.div>

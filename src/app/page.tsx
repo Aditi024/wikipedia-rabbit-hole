@@ -1,11 +1,16 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { RabbitHoleArticle, ScoreInfo, Connection } from "@/lib/types";
 import { generateNodePositions, NodePosition } from "@/lib/layout";
 import { saveRabbitHole, updateStats } from "@/lib/storage";
-import { generateNarrative, RabbitHoleNarrative } from "@/lib/narrative";
+import {
+  generateNarrative,
+  RabbitHoleNarrative,
+  stripParenthetical,
+} from "@/lib/narrative";
 import { buildDefaultConnections, tracePathFromConnections } from "@/lib/graph";
 import { encodeRabbitHole } from "@/lib/share";
 import NodeCanvas from "@/app/components/NodeCanvas";
@@ -13,9 +18,12 @@ import ExploreButton from "@/app/components/ExploreButton";
 import ScoreDisplay from "@/app/components/ScoreDisplay";
 import LoadingTunnel from "@/app/components/LoadingTunnel";
 
-type AppState = "landing" | "loading" | "exploring";
+type AppState = "landing" | "loading" | "reveal" | "exploring";
+
+const REVEAL_DURATION_MS = 3200;
 
 export default function Home() {
+  const router = useRouter();
   const [state, setState] = useState<AppState>("landing");
   const [articles, setArticles] = useState<RabbitHoleArticle[]>([]);
   const [positions, setPositions] = useState<NodePosition[]>([]);
@@ -24,11 +32,32 @@ export default function Home() {
   const [narrative, setNarrative] = useState<RabbitHoleNarrative | null>(null);
   const [connections, setConnections] = useState<Connection[]>([]);
   const [saved, setSaved] = useState(false);
+  const [showPostSave, setShowPostSave] = useState(false);
   const [shared, setShared] = useState<"idle" | "copied">("idle");
+  const revealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (state === "reveal") {
+      revealTimerRef.current = setTimeout(
+        () => setState("exploring"),
+        REVEAL_DURATION_MS
+      );
+      return () => {
+        if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+      };
+    }
+  }, [state]);
+
+  const skipReveal = useCallback(() => {
+    if (state !== "reveal") return;
+    if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+    setState("exploring");
+  }, [state]);
 
   const explore = useCallback(async () => {
     setState("loading");
     setSaved(false);
+    setShowPostSave(false);
     setShared("idle");
 
     try {
@@ -51,7 +80,7 @@ export default function Home() {
       setNarrative(holeNarrative);
       setScores([]);
       setTotalScore(0);
-      setState("exploring");
+      setState("reveal");
 
       try {
         const scoreRes = await fetch("/api/score", {
@@ -157,6 +186,7 @@ export default function Home() {
     };
     saveRabbitHole(hole);
     setSaved(true);
+    setShowPostSave(true);
   }, [articles, totalScore]);
 
   const handleShare = useCallback(async () => {
@@ -223,7 +253,73 @@ export default function Home() {
           </motion.div>
         )}
 
-        {state === "loading" && <LoadingTunnel key="loading" />}
+        {state === "loading" && (
+          <LoadingTunnel
+            key="loading"
+            onCancel={() => setState("landing")}
+          />
+        )}
+
+        {state === "reveal" && articles.length >= 2 && (
+          <motion.div
+            key="reveal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.6 }}
+            onClick={skipReveal}
+            className="flex flex-col items-center justify-center text-center px-8 cursor-pointer select-none"
+          >
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 0.6, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+              className="text-sm uppercase tracking-[0.25em] text-text-muted font-display mb-8"
+            >
+              How did you get from&hellip;
+            </motion.p>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, type: "spring", damping: 20, stiffness: 90 }}
+              className="text-4xl md:text-6xl font-bold text-foreground leading-tight max-w-3xl font-display"
+            >
+              <span className="text-brand">
+                {stripParenthetical(articles[0].title)}
+              </span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.0, duration: 0.5 }}
+              className="text-3xl md:text-5xl text-text-muted font-display my-4"
+            >
+              &darr;
+            </motion.p>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.3, type: "spring", damping: 20, stiffness: 90 }}
+              className="text-4xl md:text-6xl font-bold text-foreground leading-tight max-w-3xl font-display"
+            >
+              <span className="text-brand">
+                {stripParenthetical(articles[articles.length - 1].title)}
+              </span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.4 }}
+              transition={{ delay: 2.2, duration: 0.5 }}
+              className="text-sm text-text-faint font-body mt-10"
+            >
+              Click to skip
+            </motion.p>
+          </motion.div>
+        )}
 
         {state === "exploring" && (
           <motion.div
@@ -272,6 +368,43 @@ export default function Home() {
                 />
               </div>
             </div>
+
+            <AnimatePresence>
+              {showPostSave && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute top-16 right-8 z-30 flex items-center gap-3 px-5 py-3 bg-surface-frosted backdrop-blur-md border border-emerald-500/20 rounded-2xl shadow-lg shadow-black/5"
+                >
+                  <span className="text-sm text-text-secondary font-body">
+                    Saved!
+                  </span>
+                  <button
+                    onClick={() => router.push("/collection")}
+                    className="text-sm font-medium text-brand hover:text-brand-hover transition-colors font-body"
+                  >
+                    View collection
+                  </button>
+                  <span className="text-foreground/10">|</span>
+                  <button
+                    onClick={() => {
+                      setShowPostSave(false);
+                      explore();
+                    }}
+                    className="text-sm font-medium text-brand hover:text-brand-hover transition-colors font-body"
+                  >
+                    Explore more
+                  </button>
+                  <button
+                    onClick={() => setShowPostSave(false)}
+                    className="text-text-faint hover:text-text-muted transition-colors ml-1 text-xs"
+                  >
+                    &times;
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <NodeCanvas
               articles={articles}

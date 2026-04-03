@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, useCallback, use } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { decodeRabbitHole } from "@/lib/share";
 import { RabbitHoleArticle, ScoreInfo, Connection } from "@/lib/types";
 import { generateNodePositions, NodePosition } from "@/lib/layout";
 import { generateNarrative, RabbitHoleNarrative } from "@/lib/narrative";
 import { buildDefaultConnections } from "@/lib/graph";
+import { saveRabbitHole } from "@/lib/storage";
 import NodeCanvas from "@/app/components/NodeCanvas";
 import ScoreDisplay from "@/app/components/ScoreDisplay";
 import ExploreButton from "@/app/components/ExploreButton";
@@ -26,6 +27,18 @@ export default function SharePage({
   const [totalScore, setTotalScore] = useState(0);
   const [narrative, setNarrative] = useState<RabbitHoleNarrative | null>(null);
   const [connections, setConnections] = useState<Connection[]>([]);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = useCallback(() => {
+    if (articles.length === 0) return;
+    saveRabbitHole({
+      id: `shared-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      articles,
+      gemScore: totalScore,
+      createdAt: new Date().toISOString(),
+    });
+    setSaved(true);
+  }, [articles, totalScore]);
 
   useEffect(() => {
     const titles = decodeRabbitHole(id);
@@ -141,9 +154,22 @@ export default function SharePage({
                 </span>
               </div>
               <div className="flex items-center gap-3">
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  onClick={handleSave}
+                  disabled={saved}
+                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all font-body ${
+                    saved
+                      ? "bg-emerald-500/20 text-emerald-700 border border-emerald-500/30"
+                      : "bg-surface-glass text-foreground border border-brand-light hover:bg-surface-translucent hover:border-brand-medium"
+                  }`}
+                >
+                  {saved ? "Saved!" : "Save"}
+                </motion.button>
                 <ExploreButton
-                  onClick={() => (window.location.href = "/")}
-                  loading={false}
+                  href="/"
+                  label="Explore your own"
                   variant="small"
                 />
               </div>

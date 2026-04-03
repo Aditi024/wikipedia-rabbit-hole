@@ -6,7 +6,7 @@ export interface RabbitHoleNarrative {
   steps: { title: string; connection: string }[];
 }
 
-function stripParenthetical(s: string): string {
+export function stripParenthetical(s: string): string {
   return s.replace(/\s*\(.*?\)\s*/g, "").trim();
 }
 
