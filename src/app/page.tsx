@@ -15,7 +15,6 @@ import { buildDefaultConnections, tracePathFromConnections } from "@/lib/graph";
 import { encodeRabbitHole } from "@/lib/share";
 import NodeCanvas from "@/app/components/NodeCanvas";
 import ExploreButton from "@/app/components/ExploreButton";
-import ScoreDisplay from "@/app/components/ScoreDisplay";
 import LoadingTunnel from "@/app/components/LoadingTunnel";
 
 type AppState = "landing" | "loading" | "reveal" | "exploring";
@@ -328,11 +327,7 @@ export default function Home() {
             animate={{ opacity: 1 }}
             className="w-full flex-1 flex flex-col"
           >
-            <div className="flex items-center justify-between px-8 py-3 z-20">
-              <ScoreDisplay
-                score={totalScore}
-                maxScore={articles.length * 5}
-              />
+            <div className="flex items-center justify-end px-8 py-3 z-20">
               <div className="flex items-center gap-3">
                 <motion.button
                   initial={{ opacity: 0 }}

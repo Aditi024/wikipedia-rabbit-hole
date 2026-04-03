@@ -9,7 +9,6 @@ import { generateNarrative, RabbitHoleNarrative } from "@/lib/narrative";
 import { buildDefaultConnections } from "@/lib/graph";
 import { saveRabbitHole } from "@/lib/storage";
 import NodeCanvas from "@/app/components/NodeCanvas";
-import ScoreDisplay from "@/app/components/ScoreDisplay";
 import ExploreButton from "@/app/components/ExploreButton";
 
 type PageState = "loading" | "ready" | "error";
@@ -144,15 +143,9 @@ export default function SharePage({
             className="w-full flex-1 flex flex-col"
           >
             <div className="flex items-center justify-between px-8 py-3 z-20">
-              <div className="flex items-center gap-4">
-                <ScoreDisplay
-                  score={totalScore}
-                  maxScore={articles.length * 5}
-                />
-                <span className="text-sm text-text-muted font-medium font-body">
-                  Shared rabbit hole
-                </span>
-              </div>
+              <span className="text-sm text-text-muted font-medium font-body">
+                Shared rabbit hole
+              </span>
               <div className="flex items-center gap-3">
                 <motion.button
                   initial={{ opacity: 0 }}
