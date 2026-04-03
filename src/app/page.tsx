@@ -16,6 +16,7 @@ import { encodeRabbitHole } from "@/lib/share";
 import NodeCanvas from "@/app/components/NodeCanvas";
 import ExploreButton from "@/app/components/ExploreButton";
 import LoadingTunnel from "@/app/components/LoadingTunnel";
+import TopicSearch from "@/app/components/TopicSearch";
 
 type AppState = "landing" | "loading" | "reveal" | "exploring";
 
@@ -33,6 +34,7 @@ export default function Home() {
   const [saved, setSaved] = useState(false);
   const [showPostSave, setShowPostSave] = useState(false);
   const [shared, setShared] = useState<"idle" | "copied">("idle");
+  const [linkContexts, setLinkContexts] = useState<(string | null)[]>([]);
   const revealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -62,7 +64,7 @@ export default function Home() {
     setState("exploring");
   }, [state]);
 
-  const explore = useCallback(async () => {
+  const explore = useCallback(async (startTitle?: string) => {
     if (abortRef.current) abortRef.current.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -73,7 +75,10 @@ export default function Home() {
     setShared("idle");
 
     try {
-      const genRes = await fetch("/api/generate", {
+      const url = startTitle
+        ? `/api/generate?startTitle=${encodeURIComponent(startTitle)}`
+        : "/api/generate";
+      const genRes = await fetch(url, {
         signal: controller.signal,
       });
       const genData = await genRes.json();
@@ -85,14 +90,15 @@ export default function Home() {
       }
 
       const chain: RabbitHoleArticle[] = genData.articles;
-      const linkContexts: (string | null)[] = genData.linkContexts || [];
+      const ctxs: (string | null)[] = genData.linkContexts || [];
       const nodePositions = generateNodePositions(chain.length);
       const defaultConns = buildDefaultConnections(chain.length);
-      const holeNarrative = generateNarrative(chain, linkContexts);
+      const holeNarrative = generateNarrative(chain, ctxs);
 
       if (controller.signal.aborted) return;
 
       setArticles(chain);
+      setLinkContexts(ctxs);
       setPositions(nodePositions);
       setConnections(defaultConns);
       setNarrative(holeNarrative);
@@ -270,9 +276,17 @@ export default function Home() {
               <br />
               Find what you never knew you were looking for.
             </motion.p>
-            <div className="relative z-10">
-              <ExploreButton onClick={explore} loading={false} />
-            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45 }}
+              className="relative z-10 w-full flex flex-col items-center gap-4"
+            >
+              <TopicSearch onSelect={(title) => explore(title)} />
+              <span className="text-sm text-text-faint font-body">or</span>
+              <ExploreButton onClick={() => explore()} loading={false} />
+            </motion.div>
           </motion.div>
         )}
 
@@ -302,16 +316,26 @@ export default function Home() {
               How did you get from&hellip;
             </motion.p>
 
-            <motion.h1
+            <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, type: "spring", damping: 20, stiffness: 90 }}
-              className="text-4xl md:text-6xl font-bold text-foreground leading-tight max-w-3xl font-display"
+              className="flex flex-col items-center"
             >
-              <span className="text-brand">
+              <h1 className="text-4xl md:text-6xl font-bold text-brand leading-tight max-w-3xl font-display">
                 {stripParenthetical(articles[0].title)}
-              </span>
-            </motion.h1>
+              </h1>
+              {articles[0].description && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.6 }}
+                  transition={{ delay: 0.8, duration: 0.4 }}
+                  className="text-base text-text-secondary font-body mt-2 max-w-md"
+                >
+                  {articles[0].description}
+                </motion.p>
+              )}
+            </motion.div>
 
             <motion.p
               initial={{ opacity: 0 }}
@@ -322,16 +346,26 @@ export default function Home() {
               &darr;
             </motion.p>
 
-            <motion.h1
+            <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.3, type: "spring", damping: 20, stiffness: 90 }}
-              className="text-4xl md:text-6xl font-bold text-foreground leading-tight max-w-3xl font-display"
+              className="flex flex-col items-center"
             >
-              <span className="text-brand">
+              <h1 className="text-4xl md:text-6xl font-bold text-brand leading-tight max-w-3xl font-display">
                 {stripParenthetical(articles[articles.length - 1].title)}
-              </span>
-            </motion.h1>
+              </h1>
+              {articles[articles.length - 1].description && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.6 }}
+                  transition={{ delay: 1.6, duration: 0.4 }}
+                  className="text-base text-text-secondary font-body mt-2 max-w-md"
+                >
+                  {articles[articles.length - 1].description}
+                </motion.p>
+              )}
+            </motion.div>
 
             <motion.p
               initial={{ opacity: 0 }}
@@ -381,7 +415,7 @@ export default function Home() {
                   {saved ? "Saved!" : "Save"}
                 </motion.button>
                 <ExploreButton
-                  onClick={explore}
+                  onClick={() => explore()}
                   loading={false}
                   variant="small"
                 />
@@ -409,7 +443,7 @@ export default function Home() {
                   <button
                     onClick={() => {
                       setShowPostSave(false);
-                      explore();
+                      void explore();
                     }}
                     className="text-sm font-medium text-brand hover:text-brand-hover transition-colors font-body"
                   >
@@ -431,6 +465,7 @@ export default function Home() {
               scores={scores}
               narrative={narrative}
               connections={connections}
+              linkContexts={linkContexts}
               onConnectionsChange={handleConnectionsChange}
               onRemoveArticle={handleRemoveArticle}
             />

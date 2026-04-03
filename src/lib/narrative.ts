@@ -3,6 +3,7 @@ import { RabbitHoleArticle } from "./types";
 export interface RabbitHoleNarrative {
   pullQuote: string;
   summary: string;
+  reflection: string;
   steps: { title: string; connection: string }[];
 }
 
@@ -54,6 +55,30 @@ function buildConnection(
   return bridge(fromSentence, toSentence);
 }
 
+const REFLECTIONS = [
+  (first: string, last: string) =>
+    `From ${first} to ${last} \u2014 everything is closer than it seems.`,
+  (first: string, last: string) =>
+    `You started with ${first} and arrived at ${last}. Knowledge has no straight lines.`,
+  (first: string, last: string) =>
+    `${first} and ${last}, connected by the threads you\u2019d never think to pull.`,
+  (first: string, last: string) =>
+    `The distance between ${first} and ${last} is shorter than you\u2019d imagine.`,
+  (first: string, last: string) =>
+    `What began at ${first} ends at ${last}. Every rabbit hole tells a story.`,
+];
+
+function buildReflection(
+  articles: RabbitHoleArticle[]
+): string {
+  const first = stripParenthetical(articles[0].title);
+  const last = stripParenthetical(articles[articles.length - 1].title);
+  const idx = Math.floor(
+    Math.abs(Math.sin((first.length + last.length) * 13)) * REFLECTIONS.length
+  );
+  return REFLECTIONS[idx](first, last);
+}
+
 const OPENERS = [
   "How",
   "The unexpected link between",
@@ -69,6 +94,7 @@ export function generateNarrative(
     return {
       pullQuote: articles[0]?.title || "",
       summary: "",
+      reflection: "",
       steps: [],
     };
   }
@@ -124,6 +150,7 @@ export function generateNarrative(
   return {
     pullQuote,
     summary: summaryBase + summaryDetail,
+    reflection: buildReflection(articles),
     steps,
   };
 }

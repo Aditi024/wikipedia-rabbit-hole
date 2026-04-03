@@ -20,6 +20,7 @@ interface NodeCanvasProps {
   scores: ScoreInfo[];
   narrative: RabbitHoleNarrative | null;
   connections: Connection[];
+  linkContexts?: (string | null)[];
   onConnectionsChange: (connections: Connection[]) => void;
   onRemoveArticle: (index: number) => void;
 }
@@ -30,6 +31,7 @@ export default function NodeCanvas({
   scores,
   narrative,
   connections,
+  linkContexts,
   onConnectionsChange,
   onRemoveArticle,
 }: NodeCanvasProps) {
@@ -148,6 +150,11 @@ export default function NodeCanvas({
         article={selectedArticle}
         rarity={selectedScore?.rarity}
         rarityColor={selectedScore?.color}
+        connectionContext={
+          selectedIndex !== null && selectedIndex < (linkContexts?.length ?? 0)
+            ? linkContexts?.[selectedIndex] ?? undefined
+            : undefined
+        }
         onClose={() => setSelectedIndex(null)}
       />
 

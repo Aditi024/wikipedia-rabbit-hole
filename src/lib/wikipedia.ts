@@ -218,6 +218,43 @@ export async function getLinkContext(
   }
 }
 
+export interface SearchResult {
+  title: string;
+  description: string;
+  thumbnail?: string;
+}
+
+export async function searchArticles(query: string): Promise<SearchResult[]> {
+  if (!query || query.length < 2) return [];
+
+  const params = new URLSearchParams({
+    action: "query",
+    list: "search",
+    srsearch: query,
+    srnamespace: "0",
+    srlimit: "6",
+    srprop: "snippet",
+    format: "json",
+    origin: "*",
+  });
+
+  try {
+    const res = await fetchWithTimeout(
+      `https://en.wikipedia.org/w/api.php?${params.toString()}`,
+      { headers }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    const results = data.query?.search || [];
+    return results.map((r: { title: string; snippet: string }) => ({
+      title: r.title,
+      description: r.snippet.replace(/<[^>]+>/g, "").slice(0, 100),
+    }));
+  } catch {
+    return [];
+  }
+}
+
 const BORING_PATTERNS = [
   /^List of /,
   /^Index of /,

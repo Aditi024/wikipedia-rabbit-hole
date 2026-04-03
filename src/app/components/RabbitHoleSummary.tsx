@@ -119,6 +119,19 @@ export default function RabbitHoleSummary({
             })}
           </div>
 
+          {narrative.reflection && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.45 }}
+              className="mt-6 pt-6 border-t border-foreground/10"
+            >
+              <p className="text-base text-text-secondary italic leading-relaxed font-body">
+                {narrative.reflection}
+              </p>
+            </motion.div>
+          )}
+
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

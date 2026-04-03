@@ -10,6 +10,7 @@ interface DetailPanelProps {
   article: RabbitHoleArticle | null;
   rarity?: GemRarity;
   rarityColor?: string;
+  connectionContext?: string;
   onClose: () => void;
 }
 
@@ -17,6 +18,7 @@ export default function DetailPanel({
   article,
   rarity,
   rarityColor,
+  connectionContext,
   onClose,
 }: DetailPanelProps) {
   return (
@@ -64,9 +66,20 @@ export default function DetailPanel({
               </p>
             )}
 
-            <p className="text-base text-text-secondary leading-[1.75] mb-8 font-body">
+            <p className="text-base text-text-secondary leading-[1.75] mb-6 font-body">
               {article.extract}
             </p>
+
+            {connectionContext && (
+              <div className="mb-6 px-4 py-3 rounded-xl bg-brand/5 border border-brand-subtle">
+                <p className="text-xs uppercase tracking-wider text-text-muted font-display mb-1.5">
+                  How this connects
+                </p>
+                <p className="text-sm text-text-secondary leading-relaxed font-body">
+                  {connectionContext}
+                </p>
+              </div>
+            )}
 
             <a
               href={article.url}

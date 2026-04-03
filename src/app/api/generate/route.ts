@@ -58,13 +58,24 @@ export async function GET(request: NextRequest) {
     const chain: RabbitHoleArticle[] = [];
     const seenTitles = new Set<string>();
 
+    const startTitle = request.nextUrl.searchParams.get("startTitle");
     let startArticle: ArticleSummary | null = null;
 
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      const candidate = await getRandomArticle();
-      if (candidate.thumbnail && candidate.extract.length > 50) {
-        startArticle = candidate;
-        break;
+    if (startTitle) {
+      try {
+        startArticle = await getArticleSummary(startTitle);
+      } catch {
+        // Fall through to random if the title doesn't resolve
+      }
+    }
+
+    if (!startArticle) {
+      for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        const candidate = await getRandomArticle();
+        if (candidate.thumbnail && candidate.extract.length > 50) {
+          startArticle = candidate;
+          break;
+        }
       }
     }
 
