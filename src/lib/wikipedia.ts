@@ -112,6 +112,8 @@ function escapeRegex(s: string): string {
 
 function stripHtml(html: string): string {
   return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
     .replace(/<sup[^>]*>[\s\S]*?<\/sup>/gi, "")
     .replace(/<[^>]+>/g, "")
     .replace(/\[\d+\]/g, "")
@@ -119,6 +121,28 @@ function stripHtml(html: string): string {
     .replace(/&[a-z]+;/gi, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+/**
+ * Checks whether extracted text reads like a real sentence vs. garbage
+ * (CSS rules, number dumps, code fragments, etc.).
+ */
+function isReadableText(text: string): boolean {
+  const digits = (text.match(/\d/g) || []).length;
+  if (digits / text.length > 0.4) return false;
+
+  if (/\{[^}]*[:{;][^}]*\}/.test(text)) return false;
+
+  if (/\.mw-parser-output/.test(text)) return false;
+
+  const words = text.split(/\s+/);
+  const shortTokens = words.filter((w) => w.length <= 2).length;
+  if (words.length > 5 && shortTokens / words.length > 0.6) return false;
+
+  const alpha = (text.match(/[a-zA-Z]/g) || []).length;
+  if (alpha / text.length < 0.3) return false;
+
+  return true;
 }
 
 function hasLinkTo(html: string, toTitle: string): boolean {
@@ -169,7 +193,7 @@ export async function getLinkContext(
       for (const block of matches) {
         if (hasLinkTo(block, toTitle)) {
           const text = stripHtml(block);
-          if (text.length > minLen) {
+          if (text.length > minLen && isReadableText(text)) {
             return text.length > 400 ? text.slice(0, 397) + "..." : text;
           }
         }
