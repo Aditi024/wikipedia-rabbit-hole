@@ -6,7 +6,7 @@ const COLS = 28;
 const ROWS = 18;
 const CELL = 55;
 const WARP_STRENGTH = 18;
-const STROKE_COLOR = "rgba(241, 132, 235, 0.55)";
+const STROKE_COLOR = "rgba(241, 132, 235, 0.35)";
 const STROKE_WIDTH = 0.9;
 
 function seededRandom(seed: number) {

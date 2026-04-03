@@ -29,9 +29,11 @@ function StatCard({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
-      className="bg-surface-frosted backdrop-blur-sm border border-brand-subtle rounded-2xl p-6 text-center hover:border-brand-light transition-all"
+      className="bg-surface-frosted backdrop-blur-sm border border-brand-subtle rounded-2xl p-6 text-center hover:border-brand-light transition-all overflow-hidden min-w-0"
     >
-      <p className="text-3xl font-bold text-brand font-display">{value}</p>
+      <p className={`font-bold text-brand font-display truncate ${
+        typeof value === "string" && value.length > 6 ? "text-base" : "text-3xl"
+      }`}>{value}</p>
       <p className="text-sm text-text-muted font-medium mt-2 font-body">
         {label}
         {accent && (
