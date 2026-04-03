@@ -27,28 +27,20 @@ const MAX_CHAIN = 5;
 const MAX_RETRIES = 3;
 
 /**
- * Quality bar rises with each position in the chain.
- * Position 1-2: always added (building the core).
- * Position 3 (4th article): needs 70+ to continue.
- * Position 4 (5th article): needs 90+ — genuinely excellent.
+ * After the minimum chain length, each additional article must pass
+ * both a quality check AND a probability roll. This ensures genuine
+ * variety in chain length (3, 4, or 5).
+ *
+ * Position 3 (4th article): 50% chance of continuing
+ * Position 4 (5th article): 25% chance of continuing
  */
-const QUALITY_GATES: Record<number, number> = { 3: 70, 4: 90 };
+const CONTINUE_PROBABILITY: Record<number, number> = { 3: 0.5, 4: 0.25 };
 
-function articleQuality(summary: ArticleSummary): number {
-  let score = 0;
-
+function isQualityArticle(summary: ArticleSummary): boolean {
   const len = summary.extract?.length ?? 0;
-  if (len > 300) score += 35;
-  else if (len > 150) score += 25;
-  else if (len > 50) score += 10;
-
-  if (summary.thumbnail || summary.originalimage) score += 25;
-
-  if (summary.description && summary.description.length > 10) score += 15;
-
-  if (summary.thumbnail && len > 200 && summary.description) score += 25;
-
-  return score;
+  const hasThumbnail = !!(summary.thumbnail || summary.originalimage);
+  const hasDescription = !!(summary.description && summary.description.length > 10);
+  return len > 150 && hasThumbnail && hasDescription;
 }
 
 export async function GET() {
@@ -83,18 +75,21 @@ export async function GET() {
 
       if (candidates.length === 0) break;
 
-      let bestSummary: ArticleSummary | null = null;
-      let bestQuality = 0;
+      const continueProbability = CONTINUE_PROBABILITY[i];
+      if (continueProbability !== undefined && Math.random() > continueProbability) break;
 
-      for (const candidate of candidates.slice(0, 6)) {
+      let bestSummary: ArticleSummary | null = null;
+
+      for (const candidate of candidates.slice(0, 5)) {
         try {
           const summary = await getArticleSummary(candidate);
-          const q = articleQuality(summary);
-          if (q > bestQuality) {
+          if (isQualityArticle(summary)) {
             bestSummary = summary;
-            bestQuality = q;
+            break;
           }
-          if (q >= 90) break;
+          if (!bestSummary && summary.extract && summary.extract.length > 50) {
+            bestSummary = summary;
+          }
         } catch {
           continue;
         }
@@ -102,8 +97,7 @@ export async function GET() {
 
       if (!bestSummary) break;
 
-      const gate = QUALITY_GATES[i];
-      if (gate && bestQuality < gate) break;
+      if (continueProbability !== undefined && !isQualityArticle(bestSummary)) break;
 
       chain.push(toArticle(bestSummary));
       seenTitles.add(bestSummary.title);
