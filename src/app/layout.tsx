@@ -16,23 +16,23 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Rabbit Hole — Wander Through Wikipedia and Discover Hidden Gems",
+  title: "Rabbit Hole — Wander Through Wikipedia",
   description:
-    "Connect random Wikipedia articles into surprising rabbit holes. Discover hidden gems, explore unexpected connections, and find what you never knew you were looking for.",
+    "Connect random Wikipedia articles into surprising rabbit holes. Discover hidden gems and explore unexpected connections.",
   metadataBase: new URL("https://rabbit-hole-zeta.vercel.app"),
   openGraph: {
-    title: "Rabbit Hole — Wander Through Wikipedia and Discover Hidden Gems",
+    title: "Rabbit Hole — Wander Through Wikipedia",
     description:
-      "Connect random Wikipedia articles into surprising rabbit holes. Discover hidden gems, explore unexpected connections, and find what you never knew you were looking for.",
+      "Connect random Wikipedia articles into surprising rabbit holes. Discover hidden gems and explore unexpected connections.",
     siteName: "Rabbit Hole",
     type: "website",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Rabbit Hole — Wander Through Wikipedia and Discover Hidden Gems",
+    title: "Rabbit Hole — Wander Through Wikipedia",
     description:
-      "Connect random Wikipedia articles into surprising rabbit holes. Discover hidden gems, explore unexpected connections, and find what you never knew you were looking for.",
+      "Connect random Wikipedia articles into surprising rabbit holes. Discover hidden gems and explore unexpected connections.",
   },
 };
 

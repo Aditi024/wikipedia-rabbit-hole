@@ -22,6 +22,7 @@ export default async function Image() {
           justifyContent: "center",
           background: "#FFAAFA",
           fontFamily: "Syne",
+          padding: "80px 100px",
           position: "relative",
         }}
       >
@@ -42,27 +43,39 @@ export default async function Image() {
             flexDirection: "column",
             alignItems: "center",
             position: "relative",
+            gap: "0px",
           }}
         >
           <div
             style={{
-              fontSize: "140px",
+              fontSize: "110px",
               fontWeight: 800,
               color: "#EF3922",
-              lineHeight: 1,
-              letterSpacing: "-4px",
+              lineHeight: 0.95,
+              letterSpacing: "-3px",
             }}
           >
-            rabbit hole.
+            rabbit
+          </div>
+          <div
+            style={{
+              fontSize: "110px",
+              fontWeight: 800,
+              color: "#EF3922",
+              lineHeight: 0.95,
+              letterSpacing: "-3px",
+            }}
+          >
+            hole.
           </div>
         </div>
 
         <div
           style={{
-            fontSize: "30px",
+            fontSize: "26px",
             fontWeight: 800,
-            color: "rgba(26, 21, 32, 0.6)",
-            marginTop: "24px",
+            color: "rgba(26, 21, 32, 0.55)",
+            marginTop: "28px",
             letterSpacing: "-0.5px",
           }}
         >
