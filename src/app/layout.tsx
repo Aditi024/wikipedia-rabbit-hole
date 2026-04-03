@@ -27,21 +27,12 @@ export const metadata: Metadata = {
     siteName: "Rabbit Hole",
     type: "website",
     locale: "en_US",
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Rabbit Hole — Wander through Wikipedia",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Rabbit Hole — Wander Through Wikipedia and Discover Hidden Gems",
     description:
       "Connect random Wikipedia articles into surprising rabbit holes. Discover hidden gems, explore unexpected connections, and find what you never knew you were looking for.",
-    images: ["/og-image.png"],
   },
 };
 
