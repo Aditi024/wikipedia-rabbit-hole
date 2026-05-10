@@ -14,7 +14,7 @@ export default function TopicSearch({ onSelect }: TopicSearchProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const search = useCallback(async (q: string) => {
     if (q.length < 2) {
@@ -47,6 +47,20 @@ export default function TopicSearch({ onSelect }: TopicSearchProps) {
     };
   }, [query, search]);
 
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
   const handleSelect = (title: string) => {
     setQuery("");
     setResults([]);
@@ -55,17 +69,18 @@ export default function TopicSearch({ onSelect }: TopicSearchProps) {
   };
 
   return (
-    <div className="relative w-full max-w-md">
+    <div ref={containerRef} className="relative w-full max-w-md z-50">
       <div className="relative">
         <input
-          ref={inputRef}
           type="text"
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
             setOpen(true);
           }}
-          onFocus={() => setOpen(true)}
+          onFocus={() => {
+            if (query.length >= 2) setOpen(true);
+          }}
           placeholder="Start from a topic..."
           className="w-full px-5 py-3.5 rounded-full bg-white/80 backdrop-blur-sm border border-brand-subtle text-foreground placeholder:text-text-faint text-base font-body focus:outline-none focus:border-brand-light focus:ring-2 focus:ring-brand/10 transition-all"
         />
@@ -107,13 +122,6 @@ export default function TopicSearch({ onSelect }: TopicSearchProps) {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {open && results.length > 0 && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setOpen(false)}
-        />
-      )}
     </div>
   );
 }
